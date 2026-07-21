@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AccessListMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.config.AccessList">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_delete" property="isDelete"/>
+        <result column="user_count" property="userCount"/>
+    </resultMap>
+
+    <resultMap id="UserResultMap" type="com.ankki.webapp.model.config.AccessListUser">
+        <id column="id" property="id"/>
+        <result column="list_id" property="listId"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_account" property="userAccount"/>
+    </resultMap>
+
+    <sql id="BaseWhere">
+        WHERE is_delete = 0
+        <if test="keyword != null and keyword != ''">
+            AND name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT *,
+               (SELECT COUNT(*) FROM alert_access_list_user WHERE list_id = alert_access_list.id) AS user_count
+        FROM alert_access_list
+        WHERE is_delete = 0
+        <if test="keyword != null and keyword != ''">
+            AND name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        ORDER BY update_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alert_access_list
+        <include refid="BaseWhere"/>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM alert_access_list WHERE id = #{id} AND is_delete = 0
+    </select>
+
+    <select id="selectAllEnabled" resultMap="BaseResultMap">
+        SELECT * FROM alert_access_list
+        WHERE is_delete = 0 AND status = 1
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        ORDER BY name ASC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_access_list (name, type, status, remark, create_time, update_time, is_delete)
+        VALUES (#{name}, #{type}, #{status}, #{remark}, #{createTime}, #{updateTime}, 0)
+    </insert>
+
+    <update id="update">
+        UPDATE alert_access_list
+        SET name = #{name},
+            type = #{type},
+            status = #{status},
+            remark = #{remark},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE alert_access_list SET is_delete = 1, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 用户明细 -->
+    <select id="selectUsersByListId" resultMap="UserResultMap">
+        SELECT * FROM alert_access_list_user WHERE list_id = #{listId}
+    </select>
+
+    <insert id="insertUsers">
+        INSERT INTO alert_access_list_user (list_id, user_name, user_account) VALUES
+        <foreach collection="users" item="u" separator=",">
+            (#{listId}, #{u.userName}, #{u.userAccount})
+        </foreach>
+    </insert>
+
+    <delete id="deleteUsersByListId">
+        DELETE FROM alert_access_list_user WHERE list_id = #{listId}
+    </delete>
+
+</mapper>

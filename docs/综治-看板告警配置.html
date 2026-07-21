@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看板告警配置 - 数据安全综合治理平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #1a2a4a;
+            color: #c0c4cc;
+        }
+        /* 顶部导航 */
+        .top-nav {
+            height: 56px;
+            background: #0d1b2a;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #1e3a5f;
+        }
+        .top-nav h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e0e6ed;
+        }
+        /* 主内容区 */
+        .main-wrap {
+            padding: 20px 24px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+        .content-card {
+            background: #0d1b2a;
+            border-radius: 8px;
+            border: 1px solid #1e3a5f;
+            padding: 24px;
+            min-height: 800px;
+        }
+        /* tab样式 */
+        .tab-header {
+            display: flex;
+            border-bottom: 2px solid #1e3a5f;
+            margin-bottom: 24px;
+        }
+        .tab-item {
+            padding: 14px 32px;
+            cursor: pointer;
+            font-size: 15px;
+            border-bottom: 3px solid transparent;
+            user-select: none;
+            color: #8c99ad;
+            background: #0d1b2a;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .tab-item.active {
+            color: #40a9ff;
+            border-color: #40a9ff;
+            font-weight: 600;
+            background: #1a2a4a;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.show {
+            display: block;
+        }
+        /* 操作栏 */
+        .operate-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #40a9ff 0%, #096dd9 100%);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #69c0ff 0%, #1890ff 100%);
+        }
+        .btn-default {
+            background: #1e3a5f;
+            color: #c0c4cc;
+            border: 1px solid #2d5a87;
+        }
+        .btn-default:hover {
+            background: #2d5a87;
+        }
+        .search-input {
+            padding: 10px 14px;
+            border: 1px solid #2d5a87;
+            border-radius: 4px;
+            width: 280px;
+            font-size: 14px;
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .search-input::placeholder {
+            color: #5a6c84;
+        }
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .data-table th {
+            background: linear-gradient(180deg, #1a2a4a 0%, #0d1b2a 100%);
+            color: #8c99ad;
+            text-align: left;
+            padding: 14px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 2px solid #1e3a5f;
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 14px 12px;
+            font-size: 14px;
+            color: #c0c4cc;
+            border-bottom: 1px solid #1e3a5f;
+        }
+        .data-table tbody tr:hover {
+            background: #1a2a4a;
+        }
+        .data-table tbody tr:nth-child(even) {
+            background: rgba(26, 42, 74, 0.3);
+        }
+        .operate-link {
+            color: #d4af37;
+            cursor: pointer;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+        .operate-link.del {
+            color: #ff6b6b;
+        }
+        .operate-link:hover {
+            text-decoration: underline;
+        }
+        /* 分页 */
+        .pagination-wrap {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 13px;
+            gap: 10px;
+            align-items: center;
+            color: #8c99ad;
+        }
+        .page-btn {
+            cursor: pointer;
+            padding: 6px 10px;
+            border: 1px solid #2d5a87;
+            border-radius: 3px;
+            color: #8c99ad;
+            background: #0d1b2a;
+        }
+        .page-btn:hover:not(.disabled) {
+            background: #1e3a5f;
+            color: #40a9ff;
+        }
+        .page-btn.disabled {
+            color: #4a5a74;
+            cursor: default;
+            background: transparent;
+        }
+        /* 遮罩弹窗 */
+        .mask-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            z-index: 999;
+        }
+        .modal-box {
+            width: 720px;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: #0d1b2a;
+            border-radius: 8px;
+            border: 1px solid #1e3a5f;
+            position: absolute;
+            left: 50%;
+            top: 5%;
+            transform: translateX(-50%);
+            padding: 28px;
+        }
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #e0e6ed;
+            border-bottom: 1px solid #1e3a5f;
+            padding-bottom: 12px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #8c99ad;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #2d5a87;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: #5a6c84;
+        }
+        .form-group select option {
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .radio-row {
+            display: flex;
+            gap: 24px;
+        }
+        .radio-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #c0c4cc;
+        }
+        .modal-footer {
+            margin-top: 28px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid #1e3a5f;
+        }
+        /* 全局提示 */
+        .global-tip {
+            position: fixed;
+            right: 24px;
+            top: 70px;
+            padding: 12px 24px;
+            border-radius: 4px;
+            color: #fff;
+            z-index: 1001;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .tip-success {
+            background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+        }
+        .tip-error {
+            background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+        }
+        .tip-warn {
+            background: linear-gradient(135deg, #faad14 0%, #d48806 100%);
+        }
+        /* 确认弹窗 */
+        .confirm-modal {
+            width: 460px;
+            padding: 24px;
+        }
+        .confirm-content {
+            margin: 20px 0;
+            color: #c0c4cc;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        /* 详情弹窗 */
+        .detail-modal {
+            width: 600px;
+            padding: 20px;
+        }
+        .detail-content {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        .detail-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 6px;
+        }
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #409eff;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #303047;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .detail-label {
+            width: 100px;
+            color: #909399;
+            flex-shrink: 0;
+        }
+        .detail-value {
+            color: #c0c4cc;
+            flex: 1;
+            word-break: break-all;
+        }
+        /* 滑动按钮样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4a4a6a;
+            transition: .3s;
+            border-radius: 20px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #52c41a;
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        .toggle-label {
+            display: inline-block;
+            font-size: 11px;
+            margin-left: 6px;
+            color: #909399;
+            vertical-align: middle;
+        }
+        .toggle-label.on {
+            color: #52c41a;
+        }
+        .toggle-label.off {
+            color: #ff4d4f;
+        }
+        .condition-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .condition-item select, .condition-item input {
+            padding: 8px 10px;
+            border: 1px solid #2d5a87;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .add-condition-btn {
+            margin: 10px 0;
+        }
+        /* 弹窗区域样式 */
+        .form-section {
+            border: 1px dashed #2d5a87;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8c99ad;
+            margin-bottom: 16px;
+            padding-left: 12px;
+            border-left: 3px solid #40a9ff;
+        }
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .form-row .form-group:last-child {
+            margin-right: 0;
+        }
+        .required-mark {
+            color: #ff4d4f;
+            margin-right: 4px;
+        }
+        .radio-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #c0c4cc;
+        }
+        .radio-row input[type="radio"] {
+            accent-color: #40a9ff;
+        }
+        .condition-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .btn-add {
+            background: linear-gradient(135deg, #40a9ff 0%, #096dd9 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .condition-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .condition-row .cond-index {
+            color: #8c99ad;
+            font-size: 13px;
+            width: 24px;
+            text-align: center;
+        }
+        .condition-row select, .condition-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #2d5a87;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .condition-row select option {
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .user-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #2d5a87;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #0d1b2a;
+            color: #c0c4cc;
+        }
+        .btn-del-user {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .relation-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: #8c99ad;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <h1>看板告警配置</h1>
+</div>
+<div class="main-wrap">
+    <div class="content-card">
+        <div class="tab-header">
+            <div class="tab-item active" data-tab="rule">告警规则</div>
+            <div class="tab-item" data-tab="blackwhite">告警黑白名单</div>
+        </div>
+        <!-- tab1 告警规则 -->
+        <div class="tab-panel show" id="tab-rule">
+            <div class="operate-bar">
+                <button class="btn btn-primary" id="addRuleBtn">添加</button>
+                <input class="search-input" id="ruleSearchInput" placeholder="请输入规则名称">
+                <button class="btn btn-default" id="ruleSearchBtn">查询</button>
+                <button class="btn btn-default" id="ruleResetBtn">重置</button>
+            </div>
+            <table class="data-table" id="ruleTable">
+                <thead>
+                    <tr>
+                        <th>规则名称</th>
+                        <th>日志类型</th>
+                        <th>规则类型</th>
+                        <th>告警等级</th>
+                        <th>白名单</th>
+                        <th>黑名单</th>
+                        <th>状态</th>
+                        <th>更新时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="ruleTbody"></tbody>
+            </table>
+            <div class="pagination-wrap" id="rulePagination"></div>
+        </div>
+        <!-- tab2 黑白名单 -->
+        <div class="tab-panel" id="tab-blackwhite">
+            <div class="operate-bar">
+                <button class="btn btn-primary" id="addListBtn">新增</button>
+                <input class="search-input" id="listSearchInput" placeholder="请输入规则名称">
+                <button class="btn btn-default" id="listSearchBtn">查询</button>
+                <button class="btn btn-default" id="listResetBtn">重置</button>
+            </div>
+            <table class="data-table" id="listTable">
+                <thead>
+                    <tr>
+                        <th>规则名称</th>
+                        <th>类别</th>
+                        <th>用户数量</th>
+                        <th>状态</th>
+                        <th>备注</th>
+                        <th>更新时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="listTbody"></tbody>
+            </table>
+            <div class="pagination-wrap" id="listPagination"></div>
+        </div>
+    </div>
+</div>
+<!-- 全局提示 -->
+<div class="global-tip" id="globalTip"></div>
+<!-- 规则新增编辑弹窗 -->
+<div class="mask-layer" id="ruleModalMask">
+    <div class="modal-box" id="ruleModal">
+        <div class="modal-title" id="ruleModalTitle">新增告警规则</div>
+        
+        <!-- 基本信息区 -->
+        <div class="form-section">
+            <div class="form-section-title">基本信息</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required-mark">*</span>规则名称</label>
+                    <input type="text" id="formRuleName" maxlength="32" placeholder="32个字符以内，不包括&lt;&gt;^空">
+                </div>
+                <div class="form-group">
+                    <label><span class="required-mark">*</span>日志类型</label>
+                    <select id="formLogType">
+                        <option value="平台登录日志">平台登录日志</option>
+                        <option value="IM登录日志">IM登录日志</option>
+                        <option value="DLP日志">DLP日志</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label>描述</label>
+                    <textarea id="formDesc" maxlength="255" rows="2" placeholder="255个字符以内"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 规则类型区 -->
+        <div class="form-section">
+            <div class="form-section-title">规则类型</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required-mark">*</span>规则类型</label>
+                    <div class="radio-row" style="margin-top: 8px; white-space: nowrap;">
+                        <label style="margin-right: 20px;"><input type="radio" name="ruleType" value="普通规则" checked><span style="color: #40a9ff;">普通规则</span></label>
+                        <label><input type="radio" name="ruleType" value="组合规则">组合规则</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>告警等级</label>
+                    <select id="formLevel">
+                        <option value="一级" style="color: #ff4d4f;">一级（红色）</option>
+                        <option value="二级" style="color: #fa8c16;">二级（橙色）</option>
+                        <option value="三级" style="color: #faad14;">三级（黄色）</option>
+                    </select>
+                </div>
+            </div>
+            <!-- 普通规则配置 -->
+            <div id="statConfig">
+            </div>
+            <!-- 组合规则配置 -->
+            <div id="matchConfig" style="display:none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时间范围(min)</label>
+                        <input type="number" id="combineDuration" min="1" max="1440" placeholder="输入时间范围">
+                    </div>
+                    <div class="form-group">
+                        <label>触发次数</label>
+                        <input type="number" id="combineCount" min="1" max="999" value="3" placeholder="输入触发次数">
+                    </div>
+                    <div class="form-group">
+                        <label>普通规则</label>
+                        <select id="combineRule">
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 匹配条件区 -->
+        <div class="form-section" id="conditionSection">
+            <div class="form-section-title">匹配条件 <span style="font-weight: normal; font-size: 12px; color: #5a6c84;">| 字段匹配</span></div>
+            <div class="condition-header">
+                <button class="btn-add" id="addCondBtn">
+                    <span>+</span>添加条件
+                </button>
+                <div class="relation-group">
+                    <span>关联方式</span>
+                    <label><input type="radio" name="linkType" value="与" checked>与</label>
+                    <label><input type="radio" name="linkType" value="或">或</label>
+                </div>
+            </div>
+            <div id="conditionList">
+                <div class="condition-row">
+                    <span class="cond-index">1</span>
+                    <select class="cond-field">
+                        <option value="">请选择字段</option>
+                        <option value="文件名">文件名</option>
+                        <option value="发送方式">发送方式</option>
+                        <option value="用户名称">用户名称</option>
+                        <option value="用户账号">用户账号</option>
+                        <option value="席位IP">席位IP</option>
+                        <option value="登录时间">登录时间</option>
+                        <option value="参与方">参与方</option>
+                    </select>
+                    <select class="cond-op">
+                        <option value="">请选择</option>
+                        <option value="等于">等于</option>
+                        <option value="不等于">不等于</option>
+                        <option value="大于等于">大于等于</option>
+                        <option value="小于">小于</</option>
+                    </select>
+                    <input class="cond-val" placeholder="输入值">
+                </div>
+            </div>
+        </div>
+
+        <!-- 黑白名单区 -->
+        <div class="form-section" id="whiteBlackSection">
+            <div class="form-section-title">黑白名单</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>白名单</label>
+                    <select id="formWhiteList">
+                        <option value="">请选择</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>黑名单</label>
+                    <select id="formBlackList">
+                        <option value="">请选择</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-default" id="cancelRuleBtn">取消</button>
+            <button class="btn btn-primary" id="saveRuleBtn">确定</button>
+        </div>
+    </div>
+</div>
+<!-- 黑白名单新增编辑弹窗 -->
+<div class="mask-layer" id="listModalMask">
+    <div class="modal-box">
+        <div class="modal-title" id="listModalTitle">新增告警黑白名单</div>
+        <div class="form-group">
+            <label>规则名称 *</label>
+            <input type="text" id="listRuleName">
+        </div>
+        <div class="form-group">
+            <label>类别</label>
+            <select id="listType">
+                <option value="白名单">白名单</option>
+                <option value="黑名单">黑名单</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>用户列表</label>
+            <div id="userListContainer">
+                <div class="user-row">
+                    <input type="text" class="user-name" placeholder="用户名">
+                    <input type="text" class="user-account" placeholder="账号">
+                    <button class="btn btn-danger btn-del-user">- 删除</button>
+                </div>
+            </div>
+            <button class="btn btn-default" id="addUserBtn" style="margin-top: 10px;">+ 添加用户</button>
+        </div>
+        <div class="form-group">
+            <label>备注</label>
+            <textarea id="listRemark" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-default close-modal">取消</button>
+            <button class="btn btn-primary" id="saveListBtn">保存</button>
+        </div>
+    </div>
+</div>
+<!-- 通用确认弹窗 -->
+<div class="mask-layer" id="confirmMask">
+    <div class="modal-box confirm-modal">
+        <div class="modal-title">操作确认</div>
+        <div class="confirm-content" id="confirmText"></div>
+        <div class="modal-footer">
+            <button class="btn btn-default" id="confirmCancel">取消</button>
+            <button class="btn btn-primary" id="confirmOk">确认</button>
+        </div>
+    </div>
+</div>
+<!-- 黑白名单详情弹窗 -->
+<div class="mask-layer" id="listDetailMask">
+    <div class="modal-box detail-modal">
+        <div class="modal-title">名单详情</div>
+        <div class="detail-content" id="listDetailContent"></div>
+        <div class="modal-footer">
+            <button class="btn btn-primary close-list-detail">关闭</button>
+        </div>
+    </div>
+</div>
+<!-- 规则详情弹窗 -->
+<div class="mask-layer" id="detailMask">
+    <div class="modal-box detail-modal">
+        <div class="modal-title">规则详情</div>
+        <div class="detail-content" id="detailContent"></div>
+        <div class="modal-footer">
+            <button class="btn btn-primary close-detail">关闭</button>
+        </div>
+    </div>
+</div>
+<script>
+// 工具函数
+function showTip(msg, type="success"){
+    const tipDom = document.getElementById("globalTip");
+    tipDom.className = "global-tip tip-" + type;
+    tipDom.innerText = msg;
+    tipDom.style.display = "block";
+    setTimeout(()=>{tipDom.style.display = "none";},2000);
+}
+function formatDate(dateObj){
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth()+1).padStart(2,"0");
+    const d = String(dateObj.getDate()).padStart(2,"0");
+    const hh = String(dateObj.getHours()).padStart(2,"0");
+    const mm = String(dateObj.getMinutes()).padStart(2,"0");
+    const ss = String(dateObj.getSeconds()).padStart(2,"0");
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+}
+function getRandomRecentDate(){
+    const now = new Date();
+    const offsetDay = Math.floor(Math.random()*30);
+    now.setDate(now.getDate()-offsetDay);
+    return now;
+}
+// 分页渲染
+function renderPagination(wrapDom, total, curPage, pageSize, callback){
+    wrapDom.innerHTML = "";
+    const totalPage = Math.ceil(total/pageSize);
+    if(totalPage<=1) return;
+    let html = `<span>共${total}条 共${totalPage}页</span>`;
+    // 上一页
+    html += `<span class="page-btn ${curPage<=1?'disabled':''}" data-page="${curPage-1}">&lt;</span>`;
+    // 页码 中间显示3页
+    let pages = [];
+    if(totalPage<=3){
+        for(let i=1;i<=totalPage;i++) pages.push(i);
+    }else{
+        if(curPage<=2){
+            pages = [1,2,3,"ell",totalPage];
+        }else if(curPage>=totalPage-1){
+            pages = [1,"ell",totalPage-2,totalPage-1,totalPage];
+        }else{
+            pages = [1,"ell",curPage-1,curPage,curPage+1,"ell",totalPage];
+        }
+    }
+    pages.forEach(p=>{
+        if(p==="ell"){
+            html += `<span style="padding:0 4px">...</span>`;
+        }else{
+            html += `<span class="page-btn ${p===curPage?'disabled':''}" data-page="${p}">${p}</span>`;
+        }
+    });
+    html += `<span class="page-btn ${curPage>=totalPage?'disabled':''}" data-page="${curPage+1}">&gt;</span>`;
+    wrapDom.innerHTML = html;
+    wrapDom.querySelectorAll(".page-btn:not(.disabled)").forEach(btn=>{
+        btn.onclick = function(){
+            callback(parseInt(this.dataset.page));
+        }
+    })
+}
+// 模拟规则数据
+let ruleData = [
+    {id:1,name:"非工作时间席位IP登录告警",logType:"平台登录日志",ruleType:"普通规则",level:"二级",white:"红区运维豁免登录",black:"外网高危终端拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:2,name:"IM非工作群发JM文件告警",logType:"IM登录日志",ruleType:"普通规则",level:"三级",white:"归档系统白名单",black:"外包账号全局拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:3,name:"工作时间单发JM文件席位告警",logType:"DLP日志",ruleType:"组合规则",level:"一级",white:"",black:"境外IP关联账号拉黑",status:"禁用",updateTime:getRandomRecentDate()},
+    {id:4,name:"IM红蓝跨方通讯全时段告警",logType:"IM登录日志",ruleType:"组合规则",level:"三级",white:"红区运维豁免登录",black:"外网高危终端拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:5,name:"多账号同席位非工作登录统计",logType:"平台登录日志",ruleType:"普通规则",level:"二级",white:"摆渡服务器白名单",black:"外包账号全局拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:6,name:"批量JM文件外发检测",logType:"DLP日志",ruleType:"组合规则",level:"三级",white:"归档系统白名单",black:"境外IP关联账号拉黑",status:"禁用",updateTime:getRandomRecentDate()},
+    {id:7,name:"周末IM大文件群发监控",logType:"IM登录日志",ruleType:"普通规则",level:"二级",white:"",black:"外包账号全局拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:8,name:"跨安全域文件传输拦截",logType:"DLP日志",ruleType:"组合规则",level:"一级",white:"摆渡服务器白名单",black:"外网高危终端拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:9,name:"夜间连续登录失败席位告警",logType:"平台登录日志",ruleType:"普通规则",level:"二级",white:"",black:"境外IP关联账号拉黑",status:"启用",updateTime:getRandomRecentDate()},
+    {id:10,name:"IM敏感文档单发外发检测",logType:"IM登录日志",ruleType:"组合规则",level:"三级",white:"归档系统白名单",black:"外网高危终端拦截",status:"启用",updateTime:getRandomRecentDate()},
+    {id:11,name:"工作日高频JM文件发送统计",logType:"DLP日志",ruleType:"普通规则",level:"二级",white:"红区运维豁免登录",black:"外包账号全局拦截",status:"禁用",updateTime:getRandomRecentDate()},
+    {id:12,name:"红蓝网IM越权通讯检测",logType:"IM登录日志",ruleType:"组合规则",level:"三级",white:"摆渡服务器白名单",black:"境外IP关联账号拉黑",status:"启用",updateTime:getRandomRecentDate()},
+];
+// 倒序
+ruleData.sort((a,b)=>b.updateTime.getTime()-a.updateTime.getTime());
+let rulePage = 1;
+const rulePageSize = 10;
+let ruleSearchKey = "";
+
+// 黑白名单模拟数据
+let listData = [
+    {id:1,name:"红区运维豁免登录",type:"白名单",users:[{name:"陈泽宇",account:"zjpower_czy"},{name:"林绍祺",account:"zjpower_lsq"}],status:"启用",remark:"调度运维豁免告警",updateTime:getRandomRecentDate()},
+    {id:2,name:"外网高危终端拦截",type:"黑名单",users:[{name:"周铭瀚",account:"ext_zhoumh"},{name:"吴浚恒",account:"outsource_wjh"},{name:"沈嘉诺",account:"sus_sjn"}],status:"启用",remark:"外部合作高危账号",updateTime:getRandomRecentDate()},
+    {id:3,name:"归档系统白名单",type:"白名单",users:[{name:"林绍祺",account:"zjpower_lsq"},{name:"郑昱帆",account:"zjpower_zyf"}],status:"启用",remark:"文件归档终端豁免",updateTime:getRandomRecentDate()},
+    {id:4,name:"外包账号全局拦截",type:"黑名单",users:[{name:"吴浚恒",account:"outsource_wjh"}],status:"禁用",remark:"临时外包已离职",updateTime:getRandomRecentDate()},
+    {id:5,name:"摆渡服务器白名单",type:"白名单",users:[{name:"郑昱帆",account:"zjpower_zyf"},{name:"陈泽宇",account:"zjpower_czy"}],status:"启用",remark:"跨域摆渡专用终端",updateTime:getRandomRecentDate()},
+    {id:6,name:"境外IP关联账号拉黑",type:"黑名单",users:[{name:"沈嘉诺",account:"sus_sjn"},{name:"周铭瀚",account:"ext_zhoumh"}],status:"启用",remark:"存在异常外联行为",updateTime:getRandomRecentDate()},
+];
+listData.sort((a,b)=>b.updateTime.getTime()-a.updateTime.getTime());
+let listPage = 1;
+const listPageSize = 10;
+let listSearchKey = "";
+
+// tab切换
+document.querySelectorAll(".tab-item").forEach(tab=>{
+    tab.onclick = function(){
+        document.querySelectorAll(".tab-item").forEach(i=>i.classList.remove("active"));
+        this.classList.add("active");
+        const tabKey = this.dataset.tab;
+        document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("show"));
+        if(tabKey==="rule") document.getElementById("tab-rule").classList.add("show");
+        else document.getElementById("tab-blackwhite").classList.add("show");
+    }
+})
+// 规则类型切换显示
+document.querySelectorAll('input[name="ruleType"]').forEach(radio=>{
+    radio.onchange = function(){
+        if(this.value==="普通规则"){
+            document.getElementById("statConfig").style.display = "block";
+            document.getElementById("matchConfig").style.display = "none";
+            document.getElementById("conditionSection").style.display = "block";
+            document.getElementById("whiteBlackSection").style.display = "block";
+        }else{
+            document.getElementById("statConfig").style.display = "none";
+            document.getElementById("matchConfig").style.display = "block";
+            document.getElementById("conditionSection").style.display = "none";
+            document.getElementById("whiteBlackSection").style.display = "none";
+            fillCombineRuleSelect();
+        }
+    }
+})
+// 添加条件
+document.getElementById("addCondBtn").onclick = function(){
+    const wrap = document.getElementById("conditionList");
+    const index = wrap.children.length + 1;
+    const item = document.createElement("div");
+    item.className = "condition-row";
+    item.innerHTML = `
+        <span class="cond-index">${index}</span>
+        <select class="cond-field">
+            <option value="">请选择字段</option>
+            <option value="文件名">文件名</option>
+            <option value="发送方式">发送方式</option>
+            <option value="用户名称">用户名称</option>
+            <option value="用户账号">用户账号</option>
+            <option value="席位IP">席位IP</option>
+            <option value="登录时间">登录时间</option>
+            <option value="参与方">参与方</option>
+        </select>
+        <select class="cond-op">
+            <option value="">请选择</option>
+            <option value="等于">等于</option>
+            <option value="不等于">不等于</option>
+        </select>
+        <input class="cond-val" placeholder="输入值">
+    `;
+    wrap.appendChild(item);
+}
+// 关闭弹窗
+document.querySelectorAll(".close-modal").forEach(btn=>{
+    btn.onclick = function(){
+        document.querySelectorAll(".mask-layer").forEach(m=>m.style.display="none");
+    }
+})
+// 取消按钮
+document.getElementById("cancelRuleBtn").onclick = function(){
+    document.querySelectorAll(".mask-layer").forEach(m=>m.style.display="none");
+}
+// 渲染规则表格
+function renderRuleTable(){
+    let filter = ruleData.filter(item=>item.name.indexOf(ruleSearchKey)>-1);
+    const total = filter.length;
+    const start = (rulePage-1)*rulePageSize;
+    const pageData = filter.slice(start,start+rulePageSize);
+    const tbody = document.getElementById("ruleTbody");
+    tbody.innerHTML = "";
+    pageData.forEach(row=>{
+        const tr = document.createElement("tr");
+        let levelColor = "";
+        if(row.level === "一级") levelColor = "color: #ff4d4f; font-weight: bold;";
+        else if(row.level === "二级") levelColor = "color: #fa8c16; font-weight: bold;";
+        else if(row.level === "三级") levelColor = "color: #faad14; font-weight: bold;";
+        const statusColor = row.status === "启用" ? "color: #52c41a;" : "color: #ff4d4f;";
+        tr.innerHTML = `
+            <td>${row.name}</td>
+            <td>${row.logType}</td>
+            <td>${row.ruleType}</td>
+            <td style="${levelColor}">${row.level}</td>
+            <td>${row.white||"-"}</td>
+            <td>${row.black||"-"}</td>
+            <td>
+                <label class="toggle-switch" data-id="${row.id}">
+                    <input type="checkbox" ${row.status === "启用" ? "checked" : ""}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label ${row.status === "启用" ? "on" : "off"}">${row.status === "启用" ? "ON" : "OFF"}</span>
+            </td>
+            <td>${formatDate(row.updateTime)}</td>
+            <td>
+                <span class="operate-link detail-rule" data-id="${row.id}">详情</span>
+                <span class="operate-link edit-rule" data-id="${row.id}">编辑</span>
+                <span class="operate-link del del-rule" data-id="${row.id}">删除</span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    })
+    renderPagination(document.getElementById("rulePagination"),total,rulePage,rulePageSize,(p)=>{
+        rulePage = p;
+        renderRuleTable();
+    })
+    bindRuleOperate();
+}
+let currentConfirmCallback = null;
+// 绑定规则操作
+function bindRuleOperate(){
+    // 详情
+    document.querySelectorAll(".detail-rule").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = ruleData.find(d=>d.id===id);
+            let levelColor = "";
+            if(item.level === "一级") levelColor = "color: #ff4d4f; font-weight: bold;";
+            else if(item.level === "二级") levelColor = "color: #fa8c16; font-weight: bold;";
+            else if(item.level === "三级") levelColor = "color: #faad14; font-weight: bold;";
+            const statusColor = item.status === "启用" ? "color: #52c41a;" : "color: #ff4d4f;";
+            document.getElementById("detailContent").innerHTML = `
+                <div class="detail-section">
+                    <div class="section-title">基本信息</div>
+                    <div class="detail-row">
+                        <span class="detail-label">规则名称：</span>
+                        <span class="detail-value">${item.name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">日志类型：</span>
+                        <span class="detail-value">${item.logType}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">规则类型：</span>
+                        <span class="detail-value">${item.ruleType}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">告警等级：</span>
+                        <span class="detail-value" style="${levelColor}">${item.level}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">状态：</span>
+                        <span class="detail-value" style="${statusColor}">${item.status}</span>
+                    </div>
+                </div>
+                ${item.ruleType === "组合规则" ? `
+                <div class="detail-section">
+                    <div class="section-title">组合规则配置</div>
+                    <div class="detail-row">
+                        <span class="detail-label">时间范围(min)：</span>
+                        <span class="detail-value">${item.combineDuration||"-"}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">触发次数：</span>
+                        <span class="detail-value">${item.combineCount||"3"}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">关联普通规则：</span>
+                        <span class="detail-value">${item.combineRule||"-"}</span>
+                    </div>
+                </div>
+                ` : `
+                <div class="detail-section">
+                    <div class="section-title">黑白名单配置</div>
+                    <div class="detail-row">
+                        <span class="detail-label">白名单：</span>
+                        <span class="detail-value">${item.white||"-"}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">黑名单：</span>
+                        <span class="detail-value">${item.black||"-"}</span>
+                    </div>
+                </div>
+                `}
+                <div class="detail-section">
+                    <div class="section-title">更新信息</div>
+                    <div class="detail-row">
+                        <span class="detail-label">更新时间：</span>
+                        <span class="detail-value">${formatDate(item.updateTime)}</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById("detailMask").style.display = "block";
+        }
+    })
+    // 关闭详情弹窗
+    document.querySelectorAll(".close-detail").forEach(btn=>{
+        btn.onclick = function(){
+            document.getElementById("detailMask").style.display = "none";
+        }
+    })
+    // 编辑
+    document.querySelectorAll(".edit-rule").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = ruleData.find(d=>d.id===id);
+            document.getElementById("ruleModalTitle").innerText = "编辑告警规则";
+            document.getElementById("formRuleName").value = item.name;
+            document.getElementById("formLogType").value = item.logType;
+            document.querySelector(`input[name="ruleType"][value="${item.ruleType}"]`).checked = true;
+            document.querySelector(`input[name="ruleType"]`).dispatchEvent(new Event("change"));
+            fillWhiteBlackList();
+            document.getElementById("formWhiteList").value = item.white || "";
+            document.getElementById("formBlackList").value = item.black || "";
+            document.getElementById("formLevel").value = item.level || "二级";
+            if(item.ruleType === "组合规则"){
+                document.getElementById("combineDuration").value = item.combineDuration || "";
+                document.getElementById("combineCount").value = item.combineCount || "3";
+                document.getElementById("combineRule").value = item.combineRule || "";
+            }
+            document.getElementById("ruleModalMask").style.display = "block";
+            // 保存前绑定确认
+            document.getElementById("saveRuleBtn").onclick = function(){
+                currentConfirmCallback = ()=>{
+                    item.name = document.getElementById("formRuleName").value;
+                    item.logType = document.getElementById("formLogType").value;
+                    item.level = document.getElementById("formLevel").value;
+                    item.white = document.getElementById("formWhiteList").value;
+                    item.black = document.getElementById("formBlackList").value;
+                    if(item.ruleType === "组合规则"){
+                        item.combineDuration = document.getElementById("combineDuration").value;
+                        item.combineCount = document.getElementById("combineCount").value;
+                        item.combineRule = document.getElementById("combineRule").value;
+                    }
+                    item.updateTime = new Date();
+                    document.getElementById("ruleModalMask").style.display = "none";
+                    renderRuleTable();
+                    showTip("规则编辑保存成功");
+                }
+                document.getElementById("confirmText").innerText = "确认要保存当前编辑的告警规则吗？";
+                document.getElementById("confirmMask").style.display = "block";
+            }
+        }
+    })
+    // 删除
+    document.querySelectorAll(".del-rule").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = ruleData.find(d=>d.id===id);
+            currentConfirmCallback = ()=>{
+                ruleData = ruleData.filter(d=>d.id!==id);
+                renderRuleTable();
+                showTip(`规则【${item.name}】已删除`,"warn");
+            }
+            document.getElementById("confirmText").innerText = `确认删除告警规则【${item.name}】？删除后无法恢复`;
+            document.getElementById("confirmMask").style.display = "block";
+        }
+    })
+    // 状态切换
+    document.querySelectorAll(".toggle-switch").forEach(toggle=>{
+        toggle.onclick = function(e){
+            e.preventDefault();
+            const id = parseInt(this.dataset.id);
+            const item = ruleData.find(d=>d.id===id);
+            const newStatus = item.status === "启用" ? "禁用" : "启用";
+            currentConfirmCallback = ()=>{
+                item.status = newStatus;
+                item.updateTime = new Date();
+                renderRuleTable();
+                showTip(`规则【${item.name}】已${newStatus}`,"success");
+            }
+            document.getElementById("confirmText").innerText = `确认将规则【${item.name}】${newStatus}？`;
+            document.getElementById("confirmMask").style.display = "block";
+        }
+    })
+}
+// 添加规则
+function fillWhiteBlackList(){
+    const whiteSelect = document.getElementById("formWhiteList");
+    const blackSelect = document.getElementById("formBlackList");
+    whiteSelect.innerHTML = `<option value="">请选择</option>`;
+    blackSelect.innerHTML = `<option value="">请选择</option>`;
+    listData.forEach(item=>{
+        if(item.type === "白名单"){
+            whiteSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+        }else{
+            blackSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+        }
+    });
+}
+// 绑定用户列表事件
+function bindUserListEvents(){
+    document.querySelectorAll(".btn-del-user").forEach(btn=>{
+        btn.onclick = function(){
+            const row = this.closest(".user-row");
+            if(document.querySelectorAll(".user-row").length > 1){
+                row.remove();
+            }else{
+                row.querySelector(".user-name").value = "";
+                row.querySelector(".user-account").value = "";
+            }
+        }
+    });
+    document.getElementById("addUserBtn").onclick = function(){
+        const container = document.getElementById("userListContainer");
+        const newRow = document.createElement("div");
+        newRow.className = "user-row";
+        newRow.innerHTML = `
+            <input type="text" class="user-name" placeholder="用户名">
+            <input type="text" class="user-account" placeholder="账号">
+            <button class="btn btn-danger btn-del-user">- 删除</button>
+        `;
+        container.appendChild(newRow);
+        bindUserListEvents();
+    };
+}
+// 填充组合规则下拉框
+function fillCombineRuleSelect(){
+    const combineSelect = document.getElementById("combineRule");
+    combineSelect.innerHTML = `<option value="">请选择</option>`;
+    ruleData.forEach(item=>{
+        if(item.ruleType === "普通规则"){
+            combineSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+        }
+    });
+}
+
+document.getElementById("addRuleBtn").onclick = function(){
+    document.getElementById("ruleModalTitle").innerText = "新增告警规则";
+    document.getElementById("formRuleName").value = "";
+    document.getElementById("formLogType").value = "平台登录日志";
+    document.getElementById("formDesc").value = "";
+    document.querySelector('input[name="ruleType"][value="普通规则"]').checked = true;
+    document.querySelector(`input[name="ruleType"]`).dispatchEvent(new Event("change"));
+    document.getElementById("conditionList").innerHTML = `
+        <div class="condition-row">
+            <span class="cond-index">1</span>
+            <select class="cond-field">
+                <option value="">请选择字段</option>
+                <option value="文件名">文件名</option>
+                <option value="发送方式">发送方式</option>
+                <option value="用户名称">用户名称</option>
+                <option value="用户账号">用户账号</option>
+                <option value="席位IP">席位IP</option>
+                <option value="登录时间">登录时间</option>
+                <option value="参与方">参与方</option>
+            </select>
+            <select class="cond-op">
+                <option value="">请选择</option>
+                <option value="等于">等于</option>
+                <option value="不等于">不等于</option>
+                <option value="大于等于">大于等于</option>
+                <option value="小于">小于</option>
+            </select>
+            <input class="cond-val" placeholder="输入值">
+        </div>
+    `;
+    fillWhiteBlackList();
+    document.getElementById("formWhiteList").value = "";
+    document.getElementById("formBlackList").value = "";
+    document.getElementById("formLevel").value = "二级";
+    document.getElementById("ruleModalMask").style.display = "block";
+    document.getElementById("saveRuleBtn").onclick = function(){
+        const newName = document.getElementById("formRuleName").value;
+        if(!newName){
+            showTip("请填写规则名称","error");
+            return;
+        }
+        currentConfirmCallback = ()=>{
+            const maxId = ruleData.length>0 ? Math.max(...ruleData.map(d=>d.id)) : 0;
+            const ruleType = document.querySelector('input[name="ruleType"]:checked').value;
+            const newItem = {
+                id:maxId+1,
+                name:newName,
+                logType:document.getElementById("formLogType").value,
+                ruleType:ruleType,
+                level:document.getElementById("formLevel").value,
+                white:document.getElementById("formWhiteList").value,
+                black:document.getElementById("formBlackList").value,
+                status:"启用",
+                updateTime:new Date()
+            };
+            if(ruleType === "组合规则"){
+                newItem.combineDuration = document.getElementById("combineDuration").value;
+                newItem.combineCount = document.getElementById("combineCount").value;
+                newItem.combineRule = document.getElementById("combineRule").value;
+            }
+            ruleData.unshift(newItem);
+            document.getElementById("ruleModalMask").style.display = "none";
+            renderRuleTable();
+            showTip("新增告警规则成功");
+        }
+        document.getElementById("confirmText").innerText = "确认保存新增的告警规则？";
+        document.getElementById("confirmMask").style.display = "block";
+    }
+}
+// 规则查询重置
+document.getElementById("ruleSearchBtn").onclick = function(){
+    ruleSearchKey = document.getElementById("ruleSearchInput").value.trim();
+    rulePage = 1;
+    renderRuleTable();
+}
+document.getElementById("ruleResetBtn").onclick = function(){
+    ruleSearchKey = "";
+    document.getElementById("ruleSearchInput").value = "";
+    rulePage = 1;
+    renderRuleTable();
+}
+
+// 黑白名单表格渲染
+function renderListTable(){
+    let filter = listData.filter(item=>item.name.indexOf(listSearchKey)>-1);
+    const total = filter.length;
+    const start = (listPage-1)*listPageSize;
+    const pageData = filter.slice(start,start+listPageSize);
+    const tbody = document.getElementById("listTbody");
+    tbody.innerHTML = "";
+    pageData.forEach(row=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.name}</td>
+            <td>${row.type}</td>
+            <td>${row.users ? row.users.length : 0}</td>
+            <td>
+                <label class="toggle-switch list-toggle-switch" data-id="${row.id}">
+                    <input type="checkbox" ${row.status === "启用" ? "checked" : ""}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label ${row.status === "启用" ? "on" : "off"}">${row.status === "启用" ? "ON" : "OFF"}</span>
+            </td>
+            <td>${row.remark||"-"}</td>
+            <td>${formatDate(row.updateTime)}</td>
+            <td>
+                <span class="operate-link detail-list" data-id="${row.id}">详情</span>
+                <span class="operate-link edit-list" data-id="${row.id}">编辑</span>
+                <span class="operate-link del del-list" data-id="${row.id}">删除</span>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    })
+    renderPagination(document.getElementById("listPagination"),total,listPage,listPageSize,(p)=>{
+        listPage = p;
+        renderListTable();
+    })
+    bindListOperate();
+}
+// 黑白名单操作绑定
+function bindListOperate(){
+    document.querySelectorAll(".detail-list").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = listData.find(d=>d.id===id);
+            const statusColor = item.status === "启用" ? "color: #52c41a;" : "color: #ff4d4f;";
+            document.getElementById("listDetailContent").innerHTML = `
+                <div class="detail-section">
+                    <div class="section-title">基本信息</div>
+                    <div class="detail-row">
+                        <span class="detail-label">规则名称：</span>
+                        <span class="detail-value">${item.name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">名单类型：</span>
+                        <span class="detail-value">${item.type}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">状态：</span>
+                        <span class="detail-value" style="${statusColor}">${item.status}</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="section-title">用户列表</div>
+                    ${(item.users && item.users.length > 0) ? item.users.map((u, i) => `
+                    <div class="detail-row" style="border-bottom: 1px solid #303047; padding-bottom: 8px; margin-bottom: 8px;">
+                        <span class="detail-label">用户${i+1}：</span>
+                        <span class="detail-value">用户名：${u.name||"-"}，账号：${u.account||"-"}</span>
+                    </div>
+                    `).join('') : `
+                    <div class="detail-row">
+                        <span class="detail-label">-</span>
+                        <span class="detail-value">暂无用户</span>
+                    </div>
+                    `}
+                </div>
+                <div class="detail-section">
+                    <div class="section-title">其他信息</div>
+                    <div class="detail-row">
+                        <span class="detail-label">备注：</span>
+                        <span class="detail-value">${item.remark||"-"}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">更新时间：</span>
+                        <span class="detail-value">${formatDate(item.updateTime)}</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById("listDetailMask").style.display = "block";
+        }
+    })
+    // 关闭黑白名单详情弹窗
+    document.querySelectorAll(".close-list-detail").forEach(btn=>{
+        btn.onclick = function(){
+            document.getElementById("listDetailMask").style.display = "none";
+        }
+    })
+    document.querySelectorAll(".edit-list").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = listData.find(d=>d.id===id);
+            document.getElementById("listModalTitle").innerText = "编辑告警黑白名单";
+            document.getElementById("listRuleName").value = item.name;
+            document.getElementById("listType").value = item.type;
+            document.getElementById("listRemark").value = item.remark;
+            const users = item.users || [];
+            if(users.length === 0){
+                document.getElementById("userListContainer").innerHTML = `
+                    <div class="user-row">
+                        <input type="text" class="user-name" placeholder="用户名">
+                        <input type="text" class="user-account" placeholder="账号">
+                        <button class="btn btn-danger btn-del-user">- 删除</button>
+                    </div>
+                `;
+            }else{
+                let html = "";
+                users.forEach(u=>{
+                    html += `
+                        <div class="user-row">
+                            <input type="text" class="user-name" value="${u.name||''}" placeholder="用户名">
+                            <input type="text" class="user-account" value="${u.account||''}" placeholder="账号">
+                            <button class="btn btn-danger btn-del-user">- 删除</button>
+                        </div>
+                    `;
+                });
+                document.getElementById("userListContainer").innerHTML = html;
+            }
+            bindUserListEvents();
+            document.getElementById("listModalMask").style.display = "block";
+            document.getElementById("saveListBtn").onclick = function(){
+                currentConfirmCallback = ()=>{
+                    item.name = document.getElementById("listRuleName").value;
+                    item.type = document.getElementById("listType").value;
+                    const newUsers = [];
+                    document.querySelectorAll(".user-row").forEach(row=>{
+                        const userName = row.querySelector(".user-name").value.trim();
+                        const userAccount = row.querySelector(".user-account").value.trim();
+                        if(userName || userAccount){
+                            newUsers.push({name: userName, account: userAccount});
+                        }
+                    });
+                    item.users = newUsers;
+                    item.remark = document.getElementById("listRemark").value;
+                    item.updateTime = new Date();
+                    document.getElementById("listModalMask").style.display = "none";
+                    renderListTable();
+                    showTip("黑白名单编辑成功");
+                }
+                document.getElementById("confirmText").innerText = "确认保存当前黑白名单修改内容？";
+                document.getElementById("confirmMask").style.display = "block";
+            }
+        }
+    })
+    document.querySelectorAll(".del-list").forEach(btn=>{
+        btn.onclick = function(){
+            const id = parseInt(this.dataset.id);
+            const item = listData.find(d=>d.id===id);
+            currentConfirmCallback = ()=>{
+                listData = listData.filter(d=>d.id!==id);
+                renderListTable();
+                showTip(`名单【${item.name}】已删除`,"warn");
+            }
+            document.getElementById("confirmText").innerText = `确认删除黑白名单【${item.name}】？`;
+            document.getElementById("confirmMask").style.display = "block";
+        }
+    })
+    // 状态切换
+    document.querySelectorAll(".list-toggle-switch").forEach(toggle=>{
+        toggle.onclick = function(e){
+            e.preventDefault();
+            const id = parseInt(this.dataset.id);
+            const item = listData.find(d=>d.id===id);
+            if(!item) return;
+            const newStatus = item.status === "启用" ? "禁用" : "启用";
+            currentConfirmCallback = ()=>{
+                item.status = newStatus;
+                item.updateTime = new Date();
+                renderListTable();
+                showTip(`名单【${item.name}】已${newStatus}`,"success");
+            }
+            document.getElementById("confirmText").innerText = `确认将名单【${item.name}】${newStatus}？`;
+            document.getElementById("confirmMask").style.display = "block";
+        }
+    })
+}
+// 新增黑白名单
+document.getElementById("addListBtn").onclick = function(){
+    document.getElementById("listModalTitle").innerText = "新增告警黑白名单";
+    document.getElementById("listRuleName").value = "";
+    document.getElementById("listType").value = "白名单";
+    document.getElementById("listRemark").value = "";
+    document.getElementById("userListContainer").innerHTML = `
+        <div class="user-row">
+            <input type="text" class="user-name" placeholder="用户名">
+            <input type="text" class="user-account" placeholder="账号">
+            <button class="btn btn-danger btn-del-user">- 删除</button>
+        </div>
+    `;
+    bindUserListEvents();
+    document.getElementById("listModalMask").style.display = "block";
+    document.getElementById("saveListBtn").onclick = function(){
+        const name = document.getElementById("listRuleName").value.trim();
+        if(!name){
+            showTip("请填写规则名称","error");
+            return;
+        }
+        const users = [];
+        document.querySelectorAll(".user-row").forEach(row=>{
+            const userName = row.querySelector(".user-name").value.trim();
+            const userAccount = row.querySelector(".user-account").value.trim();
+            if(userName || userAccount){
+                users.push({name: userName, account: userAccount});
+            }
+        });
+        currentConfirmCallback = ()=>{
+            const maxId = listData.length>0 ? Math.max(...listData.map(d=>d.id)) : 0;
+            const newItem = {
+                id:maxId+1,
+                name:name,
+                type:document.getElementById("listType").value,
+                users:users,
+                status:"启用",
+                remark:document.getElementById("listRemark").value,
+                updateTime:new Date()
+            };
+            listData.unshift(newItem);
+            document.getElementById("listModalMask").style.display = "none";
+            renderListTable();
+            showTip("新增黑白名单成功");
+        }
+        document.getElementById("confirmText").innerText = "确认保存新增黑白名单？";
+        document.getElementById("confirmMask").style.display = "block";
+    }
+}
+// 黑白名单查询重置
+document.getElementById("listSearchBtn").onclick = function(){
+    listSearchKey = document.getElementById("listSearchInput").value.trim();
+    listPage = 1;
+    renderListTable();
+}
+document.getElementById("listResetBtn").onclick = function(){
+    listSearchKey = "";
+    document.getElementById("listSearchInput").value = "";
+    listPage = 1;
+    renderListTable();
+}
+// 通用确认弹窗按钮
+document.getElementById("confirmCancel").onclick = function(){
+    document.getElementById("confirmMask").style.display = "none";
+    currentConfirmCallback = null;
+}
+document.getElementById("confirmOk").onclick = function(){
+    document.getElementById("confirmMask").style.display = "none";
+    if(currentConfirmCallback) currentConfirmCallback();
+    currentConfirmCallback = null;
+}
+// 初始化页面
+window.onload = function(){
+    renderRuleTable();
+    renderListTable();
+}
+</script>
+</body>
+</html>

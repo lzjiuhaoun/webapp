@@ -1,0 +1,22 @@
+server:
+  port: 8543
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 500
+    connection-timeout: 3000
+
+spring:
+  profiles:
+    active: dev
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis:
+  mapper-locations:
+    - classpath:dm/mapper/*.xml
+  type-aliases-package: com.ankki.webapp.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: false
