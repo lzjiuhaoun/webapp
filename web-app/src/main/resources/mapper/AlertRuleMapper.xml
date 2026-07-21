@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AlertRuleMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.config.AlertRule">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="log_type" property="logType"/>
+        <result column="rule_type" property="ruleType"/>
+        <result column="level" property="level"/>
+        <result column="link_type" property="linkType"/>
+        <result column="conditions" property="conditions"/>
+        <result column="combine_duration" property="combineDuration"/>
+        <result column="combine_count" property="combineCount"/>
+        <result column="combine_rule_id" property="combineRuleId"/>
+        <result column="whitelist_id" property="whitelistId"/>
+        <result column="blacklist_id" property="blacklistId"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_delete" property="isDelete"/>
+    </resultMap>
+
+    <sql id="BaseWhere">
+        WHERE is_delete = 0
+        <if test="keyword != null and keyword != ''">
+            AND name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="logType != null">
+            AND log_type = #{logType}
+        </if>
+        <if test="ruleType != null">
+            AND rule_type = #{ruleType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT * FROM alert_rule
+        <include refid="BaseWhere"/>
+        ORDER BY update_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alert_rule
+        <include refid="BaseWhere"/>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM alert_rule WHERE id = #{id} AND is_delete = 0
+    </select>
+
+    <select id="selectByCombineRuleId" resultMap="BaseResultMap">
+        SELECT * FROM alert_rule WHERE combine_rule_id = #{combineRuleId} AND is_delete = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_rule (name, description, log_type, rule_type, level, link_type,
+                                conditions, combine_duration, combine_count, combine_rule_id,
+                                whitelist_id, blacklist_id, status, create_time, update_time, is_delete)
+        VALUES (#{name}, #{description}, #{logType}, #{ruleType}, #{level}, #{linkType},
+                #{conditions}, #{combineDuration}, #{combineCount}, #{combineRuleId},
+                #{whitelistId}, #{blacklistId}, #{status}, #{createTime}, #{updateTime}, 0)
+    </insert>
+
+    <update id="update">
+        UPDATE alert_rule
+        SET name = #{name},
+            description = #{description},
+            log_type = #{logType},
+            rule_type = #{ruleType},
+            level = #{level},
+            link_type = #{linkType},
+            conditions = #{conditions},
+            combine_duration = #{combineDuration},
+            combine_count = #{combineCount},
+            combine_rule_id = #{combineRuleId},
+            whitelist_id = #{whitelistId},
+            blacklist_id = #{blacklistId},
+            status = #{status},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE alert_rule SET is_delete = 1, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="batchDelete">
+        UPDATE alert_rule SET is_delete = 1, update_time = #{updateTime}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

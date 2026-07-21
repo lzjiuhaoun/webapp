@@ -384,9 +384,27 @@
 
 ---
 
-### 24. alert_rule — 告警规则 (预留)
+### 24. alert_rule — 告警规则
 
-> 后期待实现，表结构待定。
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 (自增) |
+| name | VARCHAR(64) | 规则名称 |
+| description | VARCHAR(255) | 描述 |
+| log_type | TINYINT | 日志类型: 0=平台登录日志, 1=IM登录日志, 2=DLP日志 |
+| rule_type | TINYINT | 规则类型: 0=普通规则, 1=组合规则 |
+| level | TINYINT | 普通规则告警等级: 1=一级红, 2=二级橙, 3=三级黄 |
+| link_type | TINYINT | 关联方式: 0=与, 1=或 |
+| conditions | TEXT | 匹配条件 JSON |
+| combine_duration | INT | 组合规则时间窗口(分钟), 预留 |
+| combine_count | INT | 组合规则触发次数阈值 |
+| combine_rule_id | INT | 组合规则引用的普通规则 ID |
+| whitelist_id | INT | 白名单 ID (FK → alert_access_list.id) |
+| blacklist_id | INT | 黑名单 ID (FK → alert_access_list.id) |
+| status | TINYINT | 状态: 0=禁用, 1=启用 |
+| create_time | BIGINT | 创建时间 |
+| update_time | BIGINT | 更新时间 |
+| is_delete | TINYINT | 软删除: 0=未删, 1=已删 |
 
 ---
 

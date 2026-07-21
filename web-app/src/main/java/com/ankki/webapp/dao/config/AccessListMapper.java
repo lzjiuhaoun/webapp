@@ -23,6 +23,8 @@ public interface AccessListMapper {
 
     List<AccessList> selectAllEnabled(@Param("type") Byte type);
 
+    AccessList selectEnabledById(@Param("id") Integer id);
+
     int insert(AccessList record);
 
     int update(AccessList record);

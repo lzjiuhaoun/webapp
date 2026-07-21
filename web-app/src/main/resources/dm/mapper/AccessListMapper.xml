@@ -59,6 +59,11 @@
         WHERE ID = #{id} AND IS_DELETE = 0
     </select>
 
+    <select id="selectEnabledById" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_ACCESS_LIST
+        WHERE ID = #{id} AND IS_DELETE = 0 AND STATUS = 1
+    </select>
+
     <select id="selectAllEnabled" resultMap="BaseResultMap">
         SELECT * FROM SCM_RJ_SIMP.ALERT_ACCESS_LIST
         WHERE IS_DELETE = 0 AND STATUS = 1

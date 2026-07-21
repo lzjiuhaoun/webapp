@@ -8,6 +8,10 @@ module.exports = defineConfig({
       '/alert-access-list': {
         target: 'http://localhost:8543',
         changeOrigin: true
+      },
+      '/alert-rule': {
+        target: 'http://localhost:8543',
+        changeOrigin: true
       }
     }
   }

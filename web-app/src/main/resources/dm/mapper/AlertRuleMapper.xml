@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AlertRuleMapper">
+
+    <!--
+        达梦 DM8 版本 (大小写敏感模式)
+        DM8 大小写敏感模式下未加引号的标识符自动转为大写，
+        因此表名/字段名统一使用大写字母与数据库一致。
+    -->
+
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.config.AlertRule">
+        <id column="ID" property="id"/>
+        <result column="NAME" property="name"/>
+        <result column="DESCRIPTION" property="description"/>
+        <result column="LOG_TYPE" property="logType"/>
+        <result column="RULE_TYPE" property="ruleType"/>
+        <result column="LEVEL" property="level"/>
+        <result column="LINK_TYPE" property="linkType"/>
+        <result column="CONDITIONS" property="conditions"/>
+        <result column="COMBINE_DURATION" property="combineDuration"/>
+        <result column="COMBINE_COUNT" property="combineCount"/>
+        <result column="COMBINE_RULE_ID" property="combineRuleId"/>
+        <result column="WHITELIST_ID" property="whitelistId"/>
+        <result column="BLACKLIST_ID" property="blacklistId"/>
+        <result column="STATUS" property="status"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+        <result column="IS_DELETE" property="isDelete"/>
+    </resultMap>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE IS_DELETE = 0
+        <if test="keyword != null and keyword != ''">
+            AND NAME LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="logType != null">
+            AND LOG_TYPE = #{logType}
+        </if>
+        <if test="ruleType != null">
+            AND RULE_TYPE = #{ruleType}
+        </if>
+        <if test="status != null">
+            AND STATUS = #{status}
+        </if>
+        ORDER BY UPDATE_TIME DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE IS_DELETE = 0
+        <if test="keyword != null and keyword != ''">
+            AND NAME LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="logType != null">
+            AND LOG_TYPE = #{logType}
+        </if>
+        <if test="ruleType != null">
+            AND RULE_TYPE = #{ruleType}
+        </if>
+        <if test="status != null">
+            AND STATUS = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE ID = #{id} AND IS_DELETE = 0
+    </select>
+
+    <select id="selectByCombineRuleId" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE COMBINE_RULE_ID = #{combineRuleId} AND IS_DELETE = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO SCM_RJ_SIMP.ALERT_RULE (NAME, DESCRIPTION, LOG_TYPE, RULE_TYPE, LEVEL, LINK_TYPE,
+                              CONDITIONS, COMBINE_DURATION, COMBINE_COUNT, COMBINE_RULE_ID,
+                              WHITELIST_ID, BLACKLIST_ID, STATUS, CREATE_TIME, UPDATE_TIME, IS_DELETE)
+        VALUES (#{name}, #{description}, #{logType}, #{ruleType}, #{level}, #{linkType},
+                #{conditions}, #{combineDuration}, #{combineCount}, #{combineRuleId},
+                #{whitelistId}, #{blacklistId}, #{status}, #{createTime}, #{updateTime}, 0)
+    </insert>
+
+    <update id="update">
+        UPDATE SCM_RJ_SIMP.ALERT_RULE
+        SET NAME = #{name},
+            DESCRIPTION = #{description},
+            LOG_TYPE = #{logType},
+            RULE_TYPE = #{ruleType},
+            LEVEL = #{level},
+            LINK_TYPE = #{linkType},
+            CONDITIONS = #{conditions},
+            COMBINE_DURATION = #{combineDuration},
+            COMBINE_COUNT = #{combineCount},
+            COMBINE_RULE_ID = #{combineRuleId},
+            WHITELIST_ID = #{whitelistId},
+            BLACKLIST_ID = #{blacklistId},
+            STATUS = #{status},
+            UPDATE_TIME = #{updateTime}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE SCM_RJ_SIMP.ALERT_RULE
+        SET IS_DELETE = 1, UPDATE_TIME = #{updateTime}
+        WHERE ID = #{id}
+    </update>
+
+    <update id="batchDelete">
+        UPDATE SCM_RJ_SIMP.ALERT_RULE
+        SET IS_DELETE = 1, UPDATE_TIME = #{updateTime}
+        WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

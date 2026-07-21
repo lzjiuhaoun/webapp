@@ -33,6 +33,10 @@
    - `kylin-arm` — 麒麟 ARM 环境
 3. **HTTPS**：web-app 必须通过 HTTPS (8443) 提供服务，HTTP (8543) 自动重定向。
 
+## 开发约束
+
+1. **Git 代理**：所有 Git 远程操作（clone/push/pull）必须通过本地代理 `http://127.0.0.1:7897` 连接 GitHub，配置方式为 `git config http.proxy http://127.0.0.1:7897` 和 `git config https.proxy http://127.0.0.1:7897`。
+
 ## 依赖约束
 
 1. **Spring 版本补丁**：Spring Framework 各模块版本已单独 pinned（5.3.20-5.3.27），不得随意升级或降级。

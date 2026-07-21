@@ -55,6 +55,10 @@
         SELECT * FROM alert_access_list WHERE id = #{id} AND is_delete = 0
     </select>
 
+    <select id="selectEnabledById" resultMap="BaseResultMap">
+        SELECT * FROM alert_access_list WHERE id = #{id} AND is_delete = 0 AND status = 1
+    </select>
+
     <select id="selectAllEnabled" resultMap="BaseResultMap">
         SELECT * FROM alert_access_list
         WHERE is_delete = 0 AND status = 1
