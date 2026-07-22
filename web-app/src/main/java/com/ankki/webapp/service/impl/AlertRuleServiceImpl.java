@@ -5,6 +5,7 @@ import com.ankki.webapp.dao.config.AlertRuleMapper;
 import com.ankki.webapp.model.config.AccessList;
 import com.ankki.webapp.model.config.AlertRule;
 import com.ankki.webapp.service.AlertRuleService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,12 +14,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 告警规则服务实现.
+ * <p>
+ * 实现告警规则的业务逻辑，包括：
+ * <ul>
+ *   <li>普通规则创建时校验关联黑白名单的有效性</li>
+ *   <li>组合规则引用的普通规则受保护：删除/禁用前检查引用关系</li>
+ * </ul>
+ * </p>
+ *
+ * @author AAS-SIMP
+ */
+@Slf4j
 @Service
 public class AlertRuleServiceImpl implements AlertRuleService {
 
+    /** 告警规则数据访问层 */
     @Autowired
     private AlertRuleMapper alertRuleMapper;
 
+    /** 黑白名单数据访问层 */
     @Autowired
     private AccessListMapper accessListMapper;
 
@@ -45,16 +61,23 @@ public class AlertRuleServiceImpl implements AlertRuleService {
         return alertRuleMapper.selectById(id);
     }
 
+    /**
+     * 校验关联的黑白名单是否存在且已启用.
+     *
+     * @param accessListId 黑白名单ID
+     * @throws IllegalArgumentException 黑白名单不存在或已禁用/删除
+     */
     private void validateAccessList(Integer accessListId) {
         if (accessListId == null) return;
         AccessList list = accessListMapper.selectEnabledById(accessListId);
         if (list == null) {
+            log.warn("关联的黑白名单不存在或已禁用: accessListId={}", accessListId);
             throw new IllegalArgumentException("关联的黑白名单不存在或已禁用/删除");
         }
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Integer add(AlertRule record) {
         validateAccessList(record.getBlacklistId());
         validateAccessList(record.getWhitelistId());
@@ -65,55 +88,75 @@ public class AlertRuleServiceImpl implements AlertRuleService {
         record.setCreateTime(now);
         record.setUpdateTime(now);
         alertRuleMapper.insert(record);
+        log.info("新增告警规则: id={}, name={}, ruleType={}", record.getId(), record.getName(), record.getRuleType());
         return record.getId();
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Integer update(AlertRule record) {
         validateAccessList(record.getBlacklistId());
         validateAccessList(record.getWhitelistId());
         record.setUpdateTime(System.currentTimeMillis());
         alertRuleMapper.update(record);
+        log.info("更新告警规则: id={}, name={}", record.getId(), record.getName());
         return record.getId();
     }
 
+    /**
+     * 检查普通规则是否被组合规则引用.
+     *
+     * @param normalRuleId 普通规则ID
+     * @throws IllegalArgumentException 已被引用
+     */
     private void checkNotReferenced(Integer normalRuleId) {
         List<AlertRule> refs = alertRuleMapper.selectByCombineRuleId(normalRuleId);
         if (!refs.isEmpty()) {
+            log.warn("普通规则已被组合规则引用，无法操作: normalRuleId={}, 引用规则={}", normalRuleId, refs.get(0).getName());
             throw new IllegalArgumentException("该普通规则已被组合规则「" + refs.get(0).getName() + "」引用，无法操作");
         }
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Integer delete(Integer id) {
         checkNotReferenced(id);
         long now = System.currentTimeMillis();
-        return alertRuleMapper.deleteById(id, now);
+        int count = alertRuleMapper.deleteById(id, now);
+        log.info("删除告警规则: id={}, result={}", id, count);
+        return count;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Integer batchDelete(List<Integer> ids) {
         for (Integer id : ids) {
             checkNotReferenced(id);
         }
         long now = System.currentTimeMillis();
-        return alertRuleMapper.batchDelete(ids, now);
+        int count = alertRuleMapper.batchDelete(ids, now);
+        log.info("批量删除告警规则: ids={}, count={}", ids, count);
+        return count;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Integer toggleStatus(Integer id) {
         AlertRule record = alertRuleMapper.selectById(id);
-        if (record == null) return 0;
+        if (record == null) {
+            log.warn("切换状态失败: 告警规则不存在, id={}", id);
+            return 0;
+        }
+        // 普通规则被组合规则引用时，禁止切换状态
         if (record.getRuleType() == AlertRule.RULE_TYPE_NORMAL) {
             checkNotReferenced(id);
         }
-        record.setStatus(record.getStatus() == AlertRule.STATUS_ENABLED
-                ? AlertRule.STATUS_DISABLED : AlertRule.STATUS_ENABLED);
+        byte newStatus = record.getStatus() == AlertRule.STATUS_ENABLED
+                ? AlertRule.STATUS_DISABLED : AlertRule.STATUS_ENABLED;
+        record.setStatus(newStatus);
         record.setUpdateTime(System.currentTimeMillis());
-        return alertRuleMapper.update(record);
+        int count = alertRuleMapper.update(record);
+        log.info("切换告警规则状态: id={}, name={}, newStatus={}", id, record.getName(), newStatus);
+        return count;
     }
 }

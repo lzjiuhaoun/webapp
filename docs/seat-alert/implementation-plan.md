@@ -65,10 +65,10 @@
 | description | VARCHAR(255) | 描述 |
 | log_type | TINYINT | 0=平台登录日志, 1=IM登录日志, 2=DLP日志 |
 | rule_type | TINYINT | 0=普通规则, 1=组合规则 |
-| level | TINYINT | 普通规则直接设: 1=一级红, 2=二级橙, 3=三级黄 |
+| level | TINYINT | 告警等级: 1=一级红, 2=二级橙, 3=三级黄 |
 | link_type | TINYINT | 0=与, 1=或 |
 | conditions | TEXT | JSON 字符串: `[{"field":"文件名","operator":"包含","value":"机密"},...]` |
-| combine_duration | INT | 组合规则预留 |
+| combine_duration | INT | 组合规则统计频率(分钟) |
 | combine_count | INT | 组合规则触发次数阈值 |
 | combine_rule_id | INT | 组合规则引用的普通规则 ID |
 | whitelist_id | INT | FK → alert_access_list.id |

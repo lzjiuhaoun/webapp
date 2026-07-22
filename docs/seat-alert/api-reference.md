@@ -110,10 +110,10 @@
 | description | String | 否 | 描述 |
 | logType | Byte | 是 | 日志类型: 0-平台登录 1-IM登录 2-DLP |
 | ruleType | Byte | 是 | 规则类型: 0-普通 1-组合 |
-| level | Byte | 普通规则必填 | 等级: 1-一级(红) 2-二级(橙) 3-三级(黄) |
+| level | Byte | 是 | 告警等级: 1-一级(红) 2-二级(橙) 3-三级(黄) |
 | linkType | Byte | 普通规则必填 | 关联方式: 0-与 1-或 |
 | conditions | String (JSON) | 普通规则必填 | 匹配条件 JSON 数组，见下方格式 |
-| combineDuration | Integer | 否 | 组合窗口(分钟) |
+| combineDuration | Integer | 组合规则时 | 统计频率(分钟) |
 | combineCount | Integer | 组合规则时 | 触发次数 |
 | combineRuleId | Integer | 组合规则时 | 引用的普通规则 ID |
 | whitelistId | Integer | 否 | 白名单 ID（必须为启用且未删除状态） |

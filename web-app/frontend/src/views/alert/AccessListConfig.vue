@@ -217,17 +217,21 @@ export default {
       this.detailVisible = true
     },
     async handleDelete(row) {
-      await this.$confirm(`确认删除黑白名单【${row.name}】？删除后无法恢复`, '操作确认', {
-        confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning'
-      })
-      await remove(row.id)
-      this.$message.success(`黑白名单【${row.name}】已删除`)
-      this.fetchData()
+      try {
+        await this.$confirm(`确认删除黑白名单【${row.name}】？删除后无法恢复`, '操作确认', {
+          confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning'
+        })
+        await remove(row.id)
+        this.$message.success(`黑白名单【${row.name}】已删除`)
+        this.fetchData()
+      } catch {}
     },
     async handleToggle(row) {
-      await toggleStatus(row.id)
-      this.$message.success(`黑白名单【${row.name}】已${row.status === 1 ? '禁用' : '启用'}`)
-      this.fetchData()
+      try {
+        await toggleStatus(row.id)
+        this.$message.success(`黑白名单【${row.name}】已${row.status === 1 ? '禁用' : '启用'}`)
+        this.fetchData()
+      } catch {}
     },
     fmtTime(ts) {
       if (!ts) return '-'

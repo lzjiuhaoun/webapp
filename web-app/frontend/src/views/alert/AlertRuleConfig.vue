@@ -160,6 +160,10 @@
               <el-option v-for="r in normalRules" :key="r.id" :label="r.name" :value="r.id" />
             </el-select>
           </el-form-item>
+          <el-form-item label="时间范围" prop="combineDuration">
+            <el-input-number v-model="form.combineDuration" :min="1" :max="525600" :step="5" />
+            <span style="margin-left: 8px; color: #999;">分钟</span>
+          </el-form-item>
           <el-form-item label="触发次数" prop="combineCount">
             <el-input-number v-model="form.combineCount" :min="2" :max="9999" />
             <span style="margin-left: 8px; color: #999;">次（组合规则备用，当前不做校验）</span>
@@ -250,6 +254,7 @@ export default {
         ruleType: [{ required: true, message: '请选择规则类型', trigger: 'change' }],
         level: [{ required: true, message: '请选择告警等级', trigger: 'change' }],
         combineRuleId: [{ required: true, message: '请选择引用的普通规则', trigger: 'change' }],
+        combineDuration: [{ required: true, message: '请配置时间范围', trigger: 'change' }],
         combineCount: [{ required: true, message: '请输入触发次数', trigger: 'blur' }]
       },
       detailVisible: false,

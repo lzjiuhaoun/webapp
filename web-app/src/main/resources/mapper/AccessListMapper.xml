@@ -68,6 +68,11 @@
         ORDER BY name ASC
     </select>
 
+    <select id="countByListId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alert_rule
+        WHERE is_delete = 0 AND (whitelist_id = #{id} OR blacklist_id = #{id})
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO alert_access_list (name, type, status, remark, create_time, update_time, is_delete)
         VALUES (#{name}, #{type}, #{status}, #{remark}, #{createTime}, #{updateTime}, 0)

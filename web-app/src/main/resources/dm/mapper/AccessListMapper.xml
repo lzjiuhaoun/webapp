@@ -73,6 +73,11 @@
         ORDER BY NAME ASC
     </select>
 
+    <select id="countByListId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE IS_DELETE = 0 AND (WHITELIST_ID = #{id} OR BLACKLIST_ID = #{id})
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO SCM_RJ_SIMP.ALERT_ACCESS_LIST (NAME, TYPE, STATUS, REMARK,
                                        CREATE_TIME, UPDATE_TIME, IS_DELETE)
