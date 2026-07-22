@@ -11,19 +11,17 @@
 | 1 | `logSource` | String | **是** | 日志来源，用于规则引擎筛选目标规则 | —（引擎内部按此字段路由到对应规则的 `logSource`） | `"IM"` |
 | 2 | `operatorName` | String | **是** | 操作人名称 | 用户名称 | `"张三"` |
 | 3 | `operatorAccount` | String | **是** | 操作人账号 | 用户账号 | `"zhangsan"` |
-| 4 | `operatorId` | String | 否 | 操作人ID | — | `"920235010"` |
-| 5 | `ipAddress` | String | **是** | 席位IP | 席位IP | `"192.168.19.189"` |
-| 6 | `logTime` | Long | **是** | 日志时间戳（毫秒） | 登录时间 | `1784168909684` |
-| 7 | `logType` | String | **是** | 操作类型 | —（条件中通过 `logType` 字段匹配） | `"私聊"` |
-| 8 | `operationResult` | String | **是** | 操作结果 | — | `"成功"` |
-| 9 | `sendMethod` | String | 否 | 发送方式，由解析层从 `logType` 派生：私聊→单发，群聊→群发 | 发送方式 | `"单发"` |
-| 10 | `fileName` | String | 否 | 文件名称（文件传输相关日志） | 文件名 | `"【公开】第四季度_许飞.doc"` |
-| 11 | `fileUrl` | String | 否 | 文件地址 | — | `"http://192.168.19.89:9001/box-im/file/xxx.doc"` |
-| 12 | `senderParty` | String | 否 | 发送方参与方/阵营 | 参与方 | `"红方"` |
-| 13 | `receivers` | List\<Receiver\> | 否 | 接收人列表（含阵营），用于跨阵营判断和未来接收方黑白名单 | —（跨阵营运算符内部使用） | 见下方示例 |
-| 14 | `description` | String | 否 | 日志描述原文 | — | `"张三 (zhangsan) 给刘某 (liumou)发送了一条公开文件消息"` |
-| 15 | `rawData` | String | 否 | 原始日志数据（JSON），保留完整原始记录用于追溯 | — | 见下方示例 |
-| 16 | `extensions` | Map\<String,Object\> | 否 | 扩展字段，未来新增匹配字段无需改实体 | 动态 | `{"browser": "Chrome 142"}` |
+| 4 | `ipAddress` | String | **是** | 席位IP | 席位IP | `"192.168.19.189"` |
+| 5 | `logTime` | Long | **是** | 日志时间戳（毫秒） | 登录时间 | `1784168909684` |
+| 6 | `logType` | String | **是** | 操作类型 | —（条件中通过 `logType` 字段匹配） | `"私聊"` |
+| 7 | `operationResult` | String | **是** | 操作结果 | — | `"成功"` |
+| 8 | `sendMethod` | String | 否 | 发送方式，由解析层从 `logType` 派生：私聊→单发，群聊→群发 | 发送方式 | `"单发"` |
+| 9 | `fileName` | String | 否 | 文件名称（文件传输相关日志） | 文件名 | `"【公开】第四季度_许飞.doc"` |
+| 10 | `senderParty` | String | 否 | 发送方参与方/阵营 | 参与方 | `"红方"` |
+| 11 | `receivers` | List\<Receiver\> | 否 | 接收人列表（含阵营），用于跨阵营判断和未来接收方黑白名单 | —（跨阵营运算符内部使用） | 见下方示例 |
+| 12 | `description` | String | 否 | 日志描述原文 | — | `"张三 (zhangsan) 给刘某 (liumou)发送了一条公开文件消息"` |
+| 13 | `rawData` | String | 否 | 原始日志数据（JSON），保留完整原始记录用于追溯 | — | 见下方示例 |
+| 14 | `extensions` | Map\<String,Object\> | 否 | 扩展字段，未来新增匹配字段无需改实体 | 动态 | `{"browser": "Chrome 142"}` |
 
 ### Receiver 内部类字段
 
@@ -48,14 +46,12 @@
 | `logSource` | — | 固定为 `"IM"` |
 | `operatorName` | `operationLog.operator` | |
 | `operatorAccount` | `operationLog.operatorUserName` | |
-| `operatorId` | `operationLog.operatorId` | |
 | `ipAddress` | `operationLog.ip` | |
 | `logTime` | `operationLog.createTime` | |
 | `logType` | `operationLog.logType` | 登录/登出/私聊/群聊 |
 | `operationResult` | `operationLog.operationResult` | |
 | `sendMethod` | — | 由 `logType` 派生：私聊→单发，群聊→群发 |
 | `fileName` | `operationLog.fileName` | 日志类型为上传文件时有值 |
-| `fileUrl` | `operationLog.fileUrl` | 日志类型为上传文件时有值 |
 | `senderParty` | `operationLog.participatyParty` | |
 | `receivers` | `receiveUserInfo[]` | 数组映射，每个元素取 `userName`、`name`、`participatyParty` |
 | `description` | `operationLog.describe` | |
@@ -68,7 +64,6 @@
 | `logSource` | — | 固定为 `"PLATFORM_LOGIN"` |
 | `operatorName` | `nickname` | |
 | `operatorAccount` | `username` | |
-| `operatorId` | `id` | |
 | `ipAddress` | `ipAddress` | |
 | `logTime` | `createTime` | 需将 `"2026-07-15 11:40:58"` 格式转为毫秒时间戳 |
 | `logType` | `loginType` | 0→登录, 1→登出 |
@@ -86,14 +81,12 @@
   "logSource": "IM",
   "operatorName": "张三",
   "operatorAccount": "zhangsan",
-  "operatorId": "920235010",
   "ipAddress": "192.168.19.189",
   "logTime": 1784168909684,
   "logType": "私聊",
   "operationResult": "成功",
   "sendMethod": "单发",
   "fileName": "【公开】第四季度_许飞.doc",
-  "fileUrl": "http://192.168.19.89:9001/box-im/file/20260716/253f1a8f-af89-41cb-8f7c-e0ee61c8dde1.doc",
   "senderParty": "红方",
   "receivers": [
     {

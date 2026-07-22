@@ -55,9 +55,6 @@ public class AlertRawLog {
     /** 操作人账号 */
     private String operatorAccount;
 
-    /** 操作人ID */
-    private String operatorId;
-
     /** 席位IP */
     private String ipAddress;
 
@@ -75,9 +72,6 @@ public class AlertRawLog {
 
     /** 文件名称（文件传输相关日志） */
     private String fileName;
-
-    /** 文件地址 */
-    private String fileUrl;
 
     /** 发送方参与方/阵营 */
     private String senderParty;
@@ -103,9 +97,6 @@ public class AlertRawLog {
     public String getOperatorAccount() { return operatorAccount; }
     public void setOperatorAccount(String operatorAccount) { this.operatorAccount = operatorAccount; }
 
-    public String getOperatorId() { return operatorId; }
-    public void setOperatorId(String operatorId) { this.operatorId = operatorId; }
-
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
 
@@ -123,9 +114,6 @@ public class AlertRawLog {
 
     public String getFileName() { return fileName; }
     public void setFileName(String fileName) { this.fileName = fileName; }
-
-    public String getFileUrl() { return fileUrl; }
-    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 
     public String getSenderParty() { return senderParty; }
     public void setSenderParty(String senderParty) { this.senderParty = senderParty; }
