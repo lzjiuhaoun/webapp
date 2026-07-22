@@ -142,9 +142,29 @@
 ]
 ```
 
-| field 可选值 | operator 可选值 |
-|-------------|----------------|
-| 用户名称, 用户账号, 席位IP, 登录时间, 发送方式, 文件名, 参与方 | 等于, 不等于, 大于等于, 小于等于, 包含, 跨阵营 |
+| field 可选值 | 字段Key | operator 可选值 |
+|-------------|---------|----------------|
+| 用户名称 | userName | equals, notEquals, contains, notContains |
+| 用户账号 | userAccount | equals, notEquals, contains, notContains |
+| 席位IP | sourceIp | equals, notEquals, contains, notContains |
+| 登录时间 | operTime | gte, lte |
+| 发送方式 | sendMethod | equals, notEquals, contains, notContains |
+| 文件名 | fileName | equals, notEquals, contains, notContains |
+| 参与方 | participantParty | crossCamp |
+| 日志类型 | logType | equals, notEquals, contains, notContains |
+| 匹配结果 | operationResult | equals, notEquals, contains, notContains |
+
+**operator 枚举值与中文对照**
+
+| 枚举值 | 中文标签 | 说明 |
+|--------|---------|------|
+| equals | 等于 | 精确匹配 |
+| notEquals | 不等于 | 反向精确匹配 |
+| gte | 大于等于 | 数值/时间比较 |
+| lte | 小于等于 | 数值/时间比较 |
+| contains | 包含 | 模糊子串匹配 |
+| notContains | 不包含 | 反向模糊匹配 |
+| crossCamp | 跨阵营 | 跨阵营通讯检测 |
 
 **成功响应**
 

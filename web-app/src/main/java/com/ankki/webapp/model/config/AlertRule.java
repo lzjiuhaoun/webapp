@@ -46,7 +46,7 @@ public class AlertRule {
     private String name;
     /** 描述 */
     private String description;
-    /** 日志类型：0=平台登录日志, 1=IM登录日志, 2=DLP日志 */
+    /** 日志来源：0=平台登录日志, 1=IM登录日志, 2=DLP日志（区别于原始日志的操作类型 logType） */
     private Byte logType;
     /** 规则类型：0=普通规则, 1=组合规则 */
     private Byte ruleType;
