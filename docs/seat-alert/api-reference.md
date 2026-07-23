@@ -50,7 +50,7 @@
       "level": 1,
       "levelName": "一级（红）",
       "linkType": 0,
-      "conditions": "[{\"field\":\"登录时间\",\"operator\":\"等于\",\"value\":\"2024-01-01 12:00:00\"}]",
+      "conditions": "[{\"field\":\"operatorName\",\"operator\":\"等于\",\"value\":\"张三\"}]",
       "combineDuration": null,
       "combineCount": null,
       "combineRuleId": null,
@@ -125,34 +125,36 @@
 ```json
 [
   {
-    "field": "用户名称",
-    "operator": "等于",
+    "field": "operatorName",
+    "operator": "equals",
     "value": "张三"
   },
   {
-    "field": "登录时间",
-    "operator": "大于等于",
-    "value": "2024-01-01 00:00:00"
+    "field": "loginTime",
+    "operator": "gte",
+    "value": "800"
   },
   {
-    "field": "席位IP",
-    "operator": "等于",
+    "field": "ipAddress",
+    "operator": "equals",
     "value": "192.168.1.1"
   }
 ]
 ```
 
-| field 可选值 | 字段Key | operator 可选值 |
-|-------------|---------|----------------|
-| 用户名称 | userName | equals, notEquals, contains, notContains |
-| 用户账号 | userAccount | equals, notEquals, contains, notContains |
-| 席位IP | sourceIp | equals, notEquals, contains, notContains |
-| 登录时间 | operTime | gte, lte |
-| 发送方式 | sendMethod | equals, notEquals, contains, notContains |
-| 文件名 | fileName | equals, notEquals, contains, notContains |
-| 参与方 | participantParty | crossCamp |
-| 日志类型 | logType | equals, notEquals, contains, notContains |
-| 匹配结果 | operationResult | equals, notEquals, contains, notContains |
+| field 可选值 | 说明 | operator 可选值 |
+|-------------|------|----------------|
+| operatorName | 用户名称 | equals, notEquals, contains, notContains |
+| operatorAccount | 用户账号 | equals, notEquals, contains, notContains |
+| ipAddress | 席位IP | equals, notEquals, contains, notContains |
+| loginTime | 登录时间（数字字符串，如"800"=8:00, "1900"=19:00） | gte, lte |
+| sendMethod | 发送方式（单发/群发） | equals, notEquals, contains, notContains |
+| fileName | 文件名 | equals, notEquals, contains, notContains |
+| senderParty | 参与方 | crossCamp |
+| logType | 操作类型（登录/登出/私聊/群聊） | equals, notEquals, contains, notContains |
+| operationResult | 匹配结果（成功/失败） | equals, notEquals, contains, notContains |
+
+字段名直接使用 `AlertRawLog` Java 属性名，引擎通过反射从实体取值，未匹配时查 `extensions` Map。
 
 **operator 枚举值与中文对照**
 
@@ -160,8 +162,10 @@
 |--------|---------|------|
 | equals | 等于 | 精确匹配 |
 | notEquals | 不等于 | 反向精确匹配 |
-| gte | 大于等于 | 数值/时间比较 |
-| lte | 小于等于 | 数值/时间比较 |
+| gte | 大于等于 | 数值比较 >= |
+| lte | 小于等于 | 数值比较 <= |
+| lt | 小于 | 数值比较 < |
+| gt | 大于 | 数值比较 > |
 | contains | 包含 | 模糊子串匹配 |
 | notContains | 不包含 | 反向模糊匹配 |
 | crossCamp | 跨阵营 | 跨阵营通讯检测 |
@@ -380,10 +384,6 @@
 
 ---
 
-### 切换状态
-
-`PUT /alert-access-list/status`
-
 **请求体 (JSON)**
 
 ```json
@@ -391,3 +391,75 @@
   "id": 1
 }
 ```
+
+---
+
+## 告警事件 `/alert-result`
+
+### 分页查询
+
+`GET /alert-result`
+
+**请求参数 (Query)**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| pageNo | Integer | 否 | 1 | 页码 |
+| pageSize | Integer | 否 | 10 | 每页条数 |
+| keyword | String | 否 | — | 规则名称模糊搜索 |
+| alertLevel | Byte | 否 | — | 告警等级 1-红 2-橙 3-黄 |
+| ruleType | Byte | 否 | — | 规则类型 0-普通 1-组合 |
+
+**成功响应 data**
+
+```json
+{
+  "pageNo": 1,
+  "pageSize": 10,
+  "total": 42,
+  "list": [
+    {
+      "id": 1,
+      "alertRuleId": 1,
+      "ruleType": 0,
+      "auditLogIds": "2077581105322381314",
+      "normalRuleId": null,
+      "alertLevel": 2,
+      "triggerCount": 1,
+      "createTime": 1700000000000
+    }
+  ]
+}
+```
+
+---
+
+### 详情
+
+`GET /alert-result/detail?id={id}`
+
+---
+
+### 删除（批量）
+
+`POST /alert-result/delete`
+
+```json
+[1, 2, 3]
+```
+
+---
+
+## 告警规则匹配引擎 (内部服务，无REST接口)
+
+**调用方式**：Spring Bean 注入 `AlertMatchService`，调用 `match(AlertRawLog rawLog)` 方法。
+
+**输入**：`AlertRawLog` 实体，必填字段：
+- `logSource` — 日志来源（PLATFORM_LOGIN / IM / DLP）
+- `recordId` — 原始日志全局ID
+- `operatorName` / `operatorAccount` — 操作人信息
+- `ipAddress` — 席位IP
+- `logTime` — 时间戳（毫秒）
+- 其他可选字段及 `extensions` Map
+
+**输出**：命中的规则数量（int），告警事件已写入 `alert_result` 表。

@@ -74,6 +74,15 @@
         WHERE COMBINE_RULE_ID = #{combineRuleId} AND IS_DELETE = 0
     </select>
 
+    <select id="selectEnabledNormalByLogSource" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RULE
+        WHERE IS_DELETE = 0
+          AND STATUS = 1
+          AND RULE_TYPE = 0
+          AND LOG_TYPE = #{logType}
+        ORDER BY UPDATE_TIME DESC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO SCM_RJ_SIMP.ALERT_RULE (NAME, DESCRIPTION, LOG_TYPE, RULE_TYPE, LEVEL, LINK_TYPE,
                               CONDITIONS, COMBINE_DURATION, COMBINE_COUNT, COMBINE_RULE_ID,

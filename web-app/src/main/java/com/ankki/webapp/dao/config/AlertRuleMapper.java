@@ -66,6 +66,14 @@ public interface AlertRuleMapper {
     List<AlertRule> selectByCombineRuleId(@Param("combineRuleId") Integer combineRuleId);
 
     /**
+     * 查询已启用的普通规则（按日志来源筛选）.
+     *
+     * @param logType 日志来源类型
+     * @return 已启用的普通规则列表
+     */
+    List<AlertRule> selectEnabledNormalByLogSource(@Param("logType") Byte logType);
+
+    /**
      * 新增告警规则.
      *
      * @param record 告警规则实体

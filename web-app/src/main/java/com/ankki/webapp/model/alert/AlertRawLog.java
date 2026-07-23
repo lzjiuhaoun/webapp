@@ -13,6 +13,9 @@ import java.util.Map;
  * <p>{@link #rawData} 保留该日志来源的原始数据（如 IM 消息 JSON、平台登录日志 JSON），
  * 用于追踪溯源、调试以及后续重新解析。</p>
  *
+ * <p>{@link #loginTime} 存储操作发生的时刻（数字字符串，如"800"=8:00），
+ * 由解析层从原始时间戳转换，以支持时间段比较。</p>
+ *
  * <p>{@code extensions} 字段为 {@code Map<String, Object>}，用于承载未来新增的、
  * 当前实体显式字段尚未覆盖的匹配字段，无须修改实体定义即可扩展。</p>
  *
@@ -46,6 +49,9 @@ public class AlertRawLog {
     /** 发送方式：群发 */
     public static final String SEND_BATCH = "群发";
 
+    /** 原始日志全局ID（对应ES中审计记录的全局标识） */
+    private String recordId;
+
     /** 日志来源 */
     private String logSource;
 
@@ -58,8 +64,8 @@ public class AlertRawLog {
     /** 席位IP */
     private String ipAddress;
 
-    /** 日志时间戳（毫秒） */
-    private Long logTime;
+    /** 登录时间（数字字符串，如"800"=8:00, "1900"=19:00） */
+    private String loginTime;
 
     /** 操作类型：登录/登出/私聊/群聊 */
     private String logType;
@@ -91,6 +97,9 @@ public class AlertRawLog {
     public String getLogSource() { return logSource; }
     public void setLogSource(String logSource) { this.logSource = logSource; }
 
+    public String getRecordId() { return recordId; }
+    public void setRecordId(String recordId) { this.recordId = recordId; }
+
     public String getOperatorName() { return operatorName; }
     public void setOperatorName(String operatorName) { this.operatorName = operatorName; }
 
@@ -100,8 +109,8 @@ public class AlertRawLog {
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
 
-    public Long getLogTime() { return logTime; }
-    public void setLogTime(Long logTime) { this.logTime = logTime; }
+    public String getLoginTime() { return loginTime; }
+    public void setLoginTime(String loginTime) { this.loginTime = loginTime; }
 
     public String getLogType() { return logType; }
     public void setLogType(String logType) { this.logType = logType; }

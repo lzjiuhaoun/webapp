@@ -9,19 +9,20 @@
 | # | 字段 | 类型 | 必需 | 说明 | 匹配条件中对应的字段名 | 示例值 |
 |---|------|------|------|------|------------------------|--------|
 | 1 | `logSource` | String | **是** | 日志来源，用于规则引擎筛选目标规则 | —（引擎内部按此字段路由到对应规则的 `logSource`） | `"IM"` |
-| 2 | `operatorName` | String | **是** | 操作人名称 | 用户名称 | `"张三"` |
-| 3 | `operatorAccount` | String | **是** | 操作人账号 | 用户账号 | `"zhangsan"` |
-| 4 | `ipAddress` | String | **是** | 席位IP | 席位IP | `"192.168.19.189"` |
-| 5 | `logTime` | Long | **是** | 日志时间戳（毫秒） | 登录时间 | `1784168909684` |
-| 6 | `logType` | String | **是** | 操作类型 | —（条件中通过 `logType` 字段匹配） | `"私聊"` |
-| 7 | `operationResult` | String | **是** | 操作结果 | — | `"成功"` |
-| 8 | `sendMethod` | String | 否 | 发送方式，由解析层从 `logType` 派生：私聊→单发，群聊→群发 | 发送方式 | `"单发"` |
-| 9 | `fileName` | String | 否 | 文件名称（文件传输相关日志） | 文件名 | `"【公开】第四季度_许飞.doc"` |
-| 10 | `senderParty` | String | 否 | 发送方参与方/阵营 | 参与方 | `"红方"` |
-| 11 | `receivers` | List\<Receiver\> | 否 | 接收人列表（含阵营），用于跨阵营判断和未来接收方黑白名单 | —（跨阵营运算符内部使用） | 见下方示例 |
-| 12 | `description` | String | 否 | 日志描述原文 | — | `"张三 (zhangsan) 给刘某 (liumou)发送了一条公开文件消息"` |
-| 13 | `rawData` | String | 否 | 原始日志数据（JSON），保留完整原始记录用于追溯 | — | 见下方示例 |
-| 14 | `extensions` | Map\<String,Object\> | 否 | 扩展字段，未来新增匹配字段无需改实体 | 动态 | `{"browser": "Chrome 142"}` |
+| 2 | `recordId` | String | **是** | 原始日志全局ID（对应ES中审计记录的全局标识） | — | `"2077581105322381314"` |
+| 3 | `operatorName` | String | **是** | 操作人名称 | `operatorName` | `"张三"` |
+| 4 | `operatorAccount` | String | **是** | 操作人账号 | `operatorAccount` | `"zhangsan"` |
+| 5 | `ipAddress` | String | **是** | 席位IP | `ipAddress` | `"192.168.19.189"` |
+| 6 | `loginTime` | String | **是** | 登录时间（数字字符串，由解析层从原始时间戳转换，如"800"=8:00） | `loginTime` | `"1900"` |
+| 7 | `logType` | String | **是** | 操作类型 | `logType` | `"私聊"` |
+| 8 | `operationResult` | String | **是** | 操作结果 | `operationResult` | `"成功"` |
+| 9 | `sendMethod` | String | 否 | 发送方式，由解析层从 `logType` 派生：私聊→单发，群聊→群发 | `sendMethod` | `"单发"` |
+| 10 | `fileName` | String | 否 | 文件名称（文件传输相关日志） | `fileName` | `"【公开】第四季度_许飞.doc"` |
+| 11 | `senderParty` | String | 否 | 发送方参与方/阵营 | `senderParty` | `"红方"` |
+| 12 | `receivers` | List\<Receiver\> | 否 | 接收人列表（含阵营），用于跨阵营判断和未来接收方黑白名单 | —（跨阵营运算符内部使用） | 见下方示例 |
+| 13 | `description` | String | 否 | 日志描述原文 | — | `"张三 (zhangsan) 给刘某 (liumou)发送了一条公开文件消息"` |
+| 14 | `rawData` | String | 否 | 原始日志数据（JSON），保留完整原始记录用于追溯 | — | 见下方示例 |
+| 15 | `extensions` | Map\<String,Object\> | 否 | 扩展字段，未来新增匹配字段无需改实体 | 动态 | `{"browser": "Chrome 142"}` |
 
 ### Receiver 内部类字段
 
@@ -33,7 +34,7 @@
 
 ## 必需字段判定规则
 
-- **跨日志来源通用必需**：`logSource`、`operatorName`、`operatorAccount`、`ipAddress`、`logTime`、`logType`、`operationResult` — 所有日志源都必须填充
+- **跨日志来源通用必需**：`logSource`、`recordId`、`operatorName`、`operatorAccount`、`ipAddress`、`loginTime`、`logType`、`operationResult` — 所有日志源都必须填充
 - **IM 聊天日志补充必需**：`sendMethod`、`senderParty`、`receivers` — IM 聊天/文件传输场景必须填充
 - **文件传输场景补充必需**：`fileName` — IM 发送文件时必须填充
 
@@ -47,7 +48,7 @@
 | `operatorName` | `operationLog.operator` | |
 | `operatorAccount` | `operationLog.operatorUserName` | |
 | `ipAddress` | `operationLog.ip` | |
-| `logTime` | `operationLog.createTime` | |
+| `loginTime` | `operationLog.createTime` | 从毫秒时间戳提取 UTC+8 时刻，转为数字字符串，如 `1784168909684`→`"1900"` |
 | `logType` | `operationLog.logType` | 登录/登出/私聊/群聊 |
 | `operationResult` | `operationLog.operationResult` | |
 | `sendMethod` | — | 由 `logType` 派生：私聊→单发，群聊→群发 |
@@ -65,7 +66,7 @@
 | `operatorName` | `nickname` | |
 | `operatorAccount` | `username` | |
 | `ipAddress` | `ipAddress` | |
-| `logTime` | `createTime` | 需将 `"2026-07-15 11:40:58"` 格式转为毫秒时间戳 |
+| `loginTime` | `createTime` | 从 `"2026-07-15 11:40:58"` 格式提取 UTC+8 时刻，转为数字字符串，如 `"2026-07-15 11:40:58"`→`"1140"` |
 | `logType` | `loginType` | 0→登录, 1→登出 |
 | `operationResult` | `status` | 0→成功, 1→失败 |
 | `sendMethod` | — | 平台登录日志无此概念，填 `null` |
@@ -78,11 +79,12 @@
 
 ```json
 {
+  "recordId": "2077581105322381314",
   "logSource": "IM",
   "operatorName": "张三",
   "operatorAccount": "zhangsan",
   "ipAddress": "192.168.19.189",
-  "logTime": 1784168909684,
+  "loginTime": "1900",
   "logType": "私聊",
   "operationResult": "成功",
   "sendMethod": "单发",

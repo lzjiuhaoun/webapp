@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AlertResultMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.alert.AlertResult">
+        <id column="id" property="id"/>
+        <result column="alert_rule_id" property="alertRuleId"/>
+        <result column="rule_type" property="ruleType"/>
+        <result column="audit_log_ids" property="auditLogIds"/>
+        <result column="normal_rule_id" property="normalRuleId"/>
+        <result column="alert_level" property="alertLevel"/>
+        <result column="trigger_count" property="triggerCount"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="BaseWhere">
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND alert_rule_id IN (SELECT id FROM alert_rule WHERE name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="alertLevel != null">
+            AND alert_level = #{alertLevel}
+        </if>
+        <if test="ruleType != null">
+            AND rule_type = #{ruleType}
+        </if>
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT * FROM alert_result
+        <include refid="BaseWhere"/>
+        ORDER BY create_time DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alert_result
+        <include refid="BaseWhere"/>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM alert_result WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_result (alert_rule_id, rule_type, audit_log_ids, normal_rule_id,
+                                  alert_level, trigger_count, create_time)
+        VALUES (#{alertRuleId}, #{ruleType}, #{auditLogIds}, #{normalRuleId},
+                #{alertLevel}, #{triggerCount}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM alert_result WHERE id = #{id}
+    </delete>
+
+    <select id="countByNormalRuleIdAfter" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM alert_result
+        WHERE normal_rule_id = #{normalRuleId}
+          AND create_time >= #{startTime}
+    </select>
+
+</mapper>

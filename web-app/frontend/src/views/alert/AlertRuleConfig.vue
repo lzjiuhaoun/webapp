@@ -126,23 +126,23 @@
           <el-form-item label="匹配条件">
             <div v-for="(cond, idx) in form.conditions" :key="idx" class="condition-row">
               <el-select v-model="cond.field" placeholder="字段" style="width: 140px; margin-right: 6px;" @change="onFieldChange(cond)">
-                <el-option v-for="f in availableFields" :key="f" :label="f" :value="f" />
+                <el-option v-for="f in availableFields" :key="f.value" :label="f.label" :value="f.value" />
               </el-select>
               <el-select v-model="cond.operator" placeholder="运算符" style="width: 120px; margin-right: 6px;">
                 <el-option v-for="op in operatorOptions(cond.field)" :key="op" :label="operatorLabel(op)" :value="op" />
               </el-select>
               <el-time-picker
-                v-if="cond.field === '登录时间'"
+                v-if="cond.field === 'loginTime'"
                 v-model="cond.value"
-                format="HH:mm:ss"
-                value-format="HH:mm:ss"
+                format="HH:mm"
+                value-format="HHmm"
                 placeholder="选择时间"
                 style="width: 200px; margin-right: 6px;"
               />
               <el-input
                 v-else
                 v-model="cond.value"
-                :placeholder="cond.field === '席位IP' ? '如 192.168.1.1' : cond.operator === 'crossCamp' ? '红方|蓝方、白方|蓝方' : '值'"
+                :placeholder="cond.field === 'ipAddress' ? '如 192.168.1.1' : cond.operator === 'crossCamp' ? '红方|蓝方、白方|蓝方' : '值'"
                 style="width: 200px; margin-right: 6px;"
               />
               <el-button type="danger" size="small" icon="el-icon-delete" @click="removeCondition(idx)" circle />
@@ -260,7 +260,17 @@ export default {
       detailVisible: false,
       detailData: null,
       logTypeMap: { 0: '平台登录日志', 1: 'IM登录日志', 2: 'DLP日志' },
-      availableFields: ['用户名称', '用户账号', '席位IP', '登录时间', '发送方式', '文件名', '参与方', '日志类型', '匹配结果'],
+      availableFields: [
+        { label: '用户名称', value: 'operatorName' },
+        { label: '用户账号', value: 'operatorAccount' },
+        { label: '席位IP', value: 'ipAddress' },
+        { label: '登录时间', value: 'loginTime' },
+        { label: '发送方式', value: 'sendMethod' },
+        { label: '文件名', value: 'fileName' },
+        { label: '参与方', value: 'senderParty' },
+        { label: '日志类型', value: 'logType' },
+        { label: '匹配结果', value: 'operationResult' }
+      ],
       normalRules: [],
       whitelists: [],
       blacklists: []
@@ -270,7 +280,10 @@ export default {
     parsedConditions() {
       if (!this.detailData || !this.detailData.conditions) return []
       try {
-        return JSON.parse(this.detailData.conditions)
+        const conds = JSON.parse(this.detailData.conditions)
+        const fieldLabelMap = {}
+        this.availableFields.forEach(f => { fieldLabelMap[f.value] = f.label })
+        return conds.map(c => ({ ...c, field: fieldLabelMap[c.field] || c.field }))
       } catch {
         return []
       }
@@ -281,47 +294,27 @@ export default {
     this.fetchReferences()
   },
   methods: {
-    fieldKey(field) {
-      const map = {
-        '用户名称': 'userName',
-        '用户账号': 'userAccount',
-        '席位IP':   'sourceIp',
-        '登录时间': 'operTime',
-        '发送方式': 'sendMethod',
-        '文件名':   'fileName',
-        '参与方':   'participantParty',
-        '日志类型': 'logType',
-        '匹配结果': 'operationResult',
-      }
-      return map[field] || ''
-    },
     operatorOptions(field) {
-      const map = {
-        '登录时间': ['gte', 'lte'],
-        '用户名称': ['contains', 'notContains', 'equals', 'notEquals'],
-        '用户账号': ['contains', 'notContains', 'equals', 'notEquals'],
-        '席位IP':   ['contains', 'notContains', 'equals', 'notEquals'],
-        '发送方式': ['contains', 'notContains', 'equals', 'notEquals'],
-        '文件名':   ['contains', 'notContains', 'equals', 'notEquals'],
-        '参与方':   ['crossCamp'],
-        '日志类型': ['contains', 'notContains', 'equals', 'notEquals'],
-        '匹配结果': ['contains', 'notContains', 'equals', 'notEquals'],
+      if (field === 'loginTime') {
+        return ['gte', 'lte']
       }
-      return map[field] || ['equals', 'notEquals', 'gte', 'lte', 'contains', 'notContains', 'crossCamp']
+      if (field === 'senderParty') {
+        return ['crossCamp']
+      }
+      return ['equals', 'notEquals', 'gte', 'lte', 'lt', 'gt', 'contains', 'notContains']
     },
     operatorLabel(op) {
       const labels = {
         equals: '等于', notEquals: '不等于', gte: '大于等于', lte: '小于等于',
-        contains: '包含', notContains: '不包含', crossCamp: '跨阵营',
+        lt: '小于', gt: '大于', contains: '包含', notContains: '不包含', crossCamp: '跨阵营'
       }
       return labels[op] || op
     },
     onFieldChange(cond) {
       const valid = this.operatorOptions(cond.field)
       if (valid.indexOf(cond.operator) === -1) {
-        cond.operator = valid[0]
+        cond.operator = valid[0] || 'equals'
       }
-      cond.fieldKey = this.fieldKey(cond.field)
     },
     createEmptyForm() {
       return {
@@ -331,7 +324,7 @@ export default {
         ruleType: 0,
         level: null,
         linkType: 0,
-        conditions: [{ field: '', fieldKey: '', operator: 'equals', value: '' }],
+        conditions: [{ field: '', operator: 'equals', value: '' }],
         combineDuration: null,
         combineCount: null,
         combineRuleId: null,
@@ -401,8 +394,7 @@ export default {
           conditions = parsed
         }
       } catch {}
-      const conds = Array.isArray(conditions) ? conditions : [{ field: '', operator: 'equals', value: '' }]
-      conds.forEach(c => { if (!c.fieldKey) c.fieldKey = this.fieldKey(c.field) })
+      const conds = Array.isArray(conditions) ? conditions : [{ field: '', operator: '等于', value: '' }]
       this.form = {
         id: res.id,
         name: res.name,
@@ -467,17 +459,6 @@ export default {
       for (const c of conds) {
         if (!c.field) return '请选择匹配字段'
         if (!c.value) return `【${c.field}】的条件值不能为空`
-        if (c.field === '登录时间') {
-          if (!/^\d{2}:\d{2}:\d{2}$/.test(c.value)) {
-            return `【登录时间】的格式必须为 HH:mm:ss`
-          }
-        }
-        if (c.field === '席位IP') {
-          const parts = c.value.split('.')
-          if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255 || p !== String(Number(p)))) {
-            return `【席位IP】的格式不正确，请输入有效的 IPv4 地址`
-          }
-        }
       }
       return ''
     },

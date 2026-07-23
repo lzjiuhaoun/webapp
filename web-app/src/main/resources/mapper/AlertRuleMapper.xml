@@ -58,6 +58,15 @@
         SELECT * FROM alert_rule WHERE combine_rule_id = #{combineRuleId} AND is_delete = 0
     </select>
 
+    <select id="selectEnabledNormalByLogSource" resultMap="BaseResultMap">
+        SELECT * FROM alert_rule
+        WHERE is_delete = 0
+          AND status = 1
+          AND rule_type = 0
+          AND log_type = #{logType}
+        ORDER BY update_time DESC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO alert_rule (name, description, log_type, rule_type, level, link_type,
                                 conditions, combine_duration, combine_count, combine_rule_id,

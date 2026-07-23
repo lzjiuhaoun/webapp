@@ -406,6 +406,21 @@
 | update_time | BIGINT | 更新时间 |
 | is_delete | TINYINT | 软删除: 0=未删, 1=已删 |
 
+### 25. alert_result — 告警事件
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 主键 (自增) |
+| alert_rule_id | INT | 命中规则 ID |
+| rule_type | TINYINT | 规则类型: 0=普通, 1=组合 |
+| audit_log_ids | TEXT | 审计源数据全局 ID，逗号分隔 |
+| normal_rule_id | INT | 组合规则引用的普通规则 ID |
+| alert_level | TINYINT | 告警等级: 1=红, 2=橙, 3=黄 |
+| trigger_count | INT | 实际触发次数 (默认 1) |
+| create_time | BIGINT | 创建时间 |
+
+索引: `idx_alert_rule_id` on `alert_rule_id`，`idx_create_time` on `create_time`
+
 ---
 
 ### 21. change_log — 变更日志

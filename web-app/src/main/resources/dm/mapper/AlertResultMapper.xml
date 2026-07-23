@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AlertResultMapper">
+
+    <!-- DM8 版本，大写标识符 -->
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.alert.AlertResult">
+        <id column="ID" property="id"/>
+        <result column="ALERT_RULE_ID" property="alertRuleId"/>
+        <result column="RULE_TYPE" property="ruleType"/>
+        <result column="AUDIT_LOG_IDS" property="auditLogIds"/>
+        <result column="NORMAL_RULE_ID" property="normalRuleId"/>
+        <result column="ALERT_LEVEL" property="alertLevel"/>
+        <result column="TRIGGER_COUNT" property="triggerCount"/>
+        <result column="CREATE_TIME" property="createTime"/>
+    </resultMap>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RESULT
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND ALERT_RULE_ID IN (SELECT ID FROM SCM_RJ_SIMP.ALERT_RULE WHERE NAME LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="alertLevel != null">
+            AND ALERT_LEVEL = #{alertLevel}
+        </if>
+        <if test="ruleType != null">
+            AND RULE_TYPE = #{ruleType}
+        </if>
+        ORDER BY CREATE_TIME DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SCM_RJ_SIMP.ALERT_RESULT
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND ALERT_RULE_ID IN (SELECT ID FROM SCM_RJ_SIMP.ALERT_RULE WHERE NAME LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="alertLevel != null">
+            AND ALERT_LEVEL = #{alertLevel}
+        </if>
+        <if test="ruleType != null">
+            AND RULE_TYPE = #{ruleType}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM SCM_RJ_SIMP.ALERT_RESULT WHERE ID = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO SCM_RJ_SIMP.ALERT_RESULT (ALERT_RULE_ID, RULE_TYPE, AUDIT_LOG_IDS, NORMAL_RULE_ID,
+                              ALERT_LEVEL, TRIGGER_COUNT, CREATE_TIME)
+        VALUES (#{alertRuleId}, #{ruleType}, #{auditLogIds}, #{normalRuleId},
+                #{alertLevel}, #{triggerCount}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM SCM_RJ_SIMP.ALERT_RESULT WHERE ID = #{id}
+    </delete>
+
+    <select id="countByNormalRuleIdAfter" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM SCM_RJ_SIMP.ALERT_RESULT
+        WHERE NORMAL_RULE_ID = #{normalRuleId}
+          AND CREATE_TIME >= #{startTime}
+    </select>
+
+</mapper>
