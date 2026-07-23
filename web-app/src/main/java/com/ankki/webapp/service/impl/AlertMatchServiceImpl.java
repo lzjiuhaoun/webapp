@@ -137,7 +137,7 @@ public class AlertMatchServiceImpl implements AlertMatchService {
             }
 
             String actualValue = getFieldValue(rawLog, field);
-            boolean matched = evaluateCondition(operator, actualValue, expectedValue, rawLog);
+            boolean matched = evaluateCondition(operator, actualValue, expectedValue, rawLog, field);
 
             if (isAnd) {
                 if (!matched) return false;
@@ -215,9 +215,44 @@ public class AlertMatchServiceImpl implements AlertMatchService {
     }
 
     private boolean evaluateCondition(String operator, String actualValue,
-                                      String expectedValue, AlertRawLog rawLog) {
+                                      String expectedValue, AlertRawLog rawLog, String field) {
         if (actualValue == null) actualValue = "";
 
+        // fileName 字段多值匹配：规则预期值以英文逗号分隔时，拆分后逐项匹配
+        if ("fileName".equals(field) && expectedValue != null && expectedValue.contains(",")) {
+            String[] parts = expectedValue.split(",");
+            boolean hasValidPart = false;
+
+            if ("notEquals".equals(operator) || "notContains".equals(operator)) {
+                // 否定运算符：实际值必须不匹配所有拆分项（AND）
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    if (trimmed.isEmpty()) continue;
+                    hasValidPart = true;
+                    if (!evaluateSingleCondition(operator, actualValue, trimmed, rawLog)) {
+                        return false;
+                    }
+                }
+                return hasValidPart;
+            } else {
+                // 肯定运算符：实际值匹配任一拆分项即命中（OR）
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    if (trimmed.isEmpty()) continue;
+                    hasValidPart = true;
+                    if (evaluateSingleCondition(operator, actualValue, trimmed, rawLog)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        return evaluateSingleCondition(operator, actualValue, expectedValue, rawLog);
+    }
+
+    private boolean evaluateSingleCondition(String operator, String actualValue,
+                                            String expectedValue, AlertRawLog rawLog) {
         switch (operator) {
             case "equals":
                 return actualValue.equals(expectedValue);
