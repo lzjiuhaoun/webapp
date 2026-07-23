@@ -142,7 +142,7 @@
               <el-input
                 v-else
                 v-model="cond.value"
-                :placeholder="cond.field === 'ipAddress' ? '如 192.168.1.1' : cond.operator === 'crossCamp' ? '红方|蓝方、白方|蓝方' : '值'"
+                :placeholder="cond.field === 'ipAddress' ? '如 192.168.1.1' : cond.operator === 'crossCamp' ? '红方、白方|蓝方、绿方' : '值'"
                 style="width: 200px; margin-right: 6px;"
               />
               <el-button type="danger" size="small" icon="el-icon-delete" @click="removeCondition(idx)" circle />

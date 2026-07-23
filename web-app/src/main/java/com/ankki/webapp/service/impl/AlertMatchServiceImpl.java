@@ -293,36 +293,35 @@ public class AlertMatchServiceImpl implements AlertMatchService {
         if (campGroupsDef == null || campGroupsDef.isEmpty()) return false;
         if (rawLog.getReceivers() == null || rawLog.getReceivers().isEmpty()) return false;
 
-        String[] groups = campGroupsDef.split("、");
+        // | 分隔不同阵营组，、 分隔同阵营成员
+        String[] groups = campGroupsDef.split("\\|");
         List<Set<String>> campGroups = Arrays.stream(groups)
-                .map(g -> Arrays.stream(g.split("\\|"))
+                .map(g -> Arrays.stream(g.split("、"))
                         .map(String::trim)
                         .collect(Collectors.toSet()))
                 .collect(Collectors.toList());
 
-        int senderGroupIndex = -1;
-        for (int i = 0; i < campGroups.size(); i++) {
-            if (campGroups.get(i).contains(senderParty)) {
-                senderGroupIndex = i;
+        boolean senderInAnyGroup = false;
+        for (Set<String> group : campGroups) {
+            if (group.contains(senderParty)) {
+                senderInAnyGroup = true;
                 break;
             }
         }
-        if (senderGroupIndex < 0) return true;
+        if (!senderInAnyGroup) return true;
 
         for (AlertRawLog.AlertRawLogReceiver receiver : rawLog.getReceivers()) {
             String receiverParty = receiver.getParty();
             if (receiverParty == null || receiverParty.isEmpty()) continue;
 
-            int receiverGroupIndex = -1;
-            for (int i = 0; i < campGroups.size(); i++) {
-                if (campGroups.get(i).contains(receiverParty)) {
-                    receiverGroupIndex = i;
+            boolean shareGroup = false;
+            for (Set<String> group : campGroups) {
+                if (group.contains(senderParty) && group.contains(receiverParty)) {
+                    shareGroup = true;
                     break;
                 }
             }
-            if (receiverGroupIndex >= 0 && receiverGroupIndex != senderGroupIndex) {
-                return true;
-            }
+            if (!shareGroup) return true;
         }
 
         return false;
