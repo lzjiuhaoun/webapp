@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankki.webapp.dao.config.AlertResultAuditMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankki.webapp.model.alert.AlertResultAudit">
+        <id column="id" property="id"/>
+        <result column="alert_result_id" property="alertResultId"/>
+        <result column="audit_log_id" property="auditLogId"/>
+        <result column="ip_address" property="ipAddress"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_result_audit (alert_result_id, audit_log_id, ip_address)
+        VALUES (#{alertResultId}, #{auditLogId}, #{ipAddress})
+    </insert>
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_result_audit (alert_result_id, audit_log_id, ip_address)
+        VALUES
+        <foreach collection="records" item="item" separator=",">
+            (#{item.alertResultId}, #{item.auditLogId}, #{item.ipAddress})
+        </foreach>
+    </insert>
+
+    <select id="selectByAlertResultId" resultMap="BaseResultMap">
+        SELECT * FROM alert_result_audit WHERE alert_result_id = #{alertResultId}
+    </select>
+
+    <delete id="deleteByAlertResultId">
+        DELETE FROM alert_result_audit WHERE alert_result_id = #{alertResultId}
+    </delete>
+
+</mapper>

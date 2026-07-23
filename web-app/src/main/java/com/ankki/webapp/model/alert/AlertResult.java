@@ -1,11 +1,14 @@
 package com.ankki.webapp.model.alert;
 
+import java.util.List;
+
 /**
  * 告警事件 —— 规则引擎匹配成功时输出的持久化记录.
  *
- * <p>普通规则命中一条产生一条告警事件（存单个审计 ID），
- * 组合规则命中产生一条告警事件（存逗号分隔的多个审计 ID 及实际触发次数）。
- * 所有展示数据通过审计源数据 ID 从 ES 查询，不冗余存储日志字段。</p>
+ * <p>普通规则命中一条产生一条告警事件，
+ * 组合规则命中产生一条告警事件（存多条审计明细及实际触发次数）。
+ * 审计日志明细（ID + 席位 IP）存储在 {@link AlertResultAudit} 明细表中，
+ * 通过 {@link #auditDetails} 关联查询。</p>
  *
  * @author AAS-SIMP
  */
@@ -29,8 +32,6 @@ public class AlertResult {
     private Integer alertRuleId;
     /** 规则类型：0=普通, 1=组合 */
     private Byte ruleType;
-    /** 审计源数据全局ID，逗号分隔 */
-    private String auditLogIds;
     /** 组合规则引用的普通规则ID */
     private Integer normalRuleId;
     /** 告警等级：1=红, 2=橙, 3=黄 */
@@ -39,6 +40,8 @@ public class AlertResult {
     private Integer triggerCount;
     /** 创建时间戳 */
     private Long createTime;
+    /** 审计日志明细列表（非持久化字段，仅用于查询返回） */
+    private List<AlertResultAudit> auditDetails;
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -48,9 +51,6 @@ public class AlertResult {
 
     public Byte getRuleType() { return ruleType; }
     public void setRuleType(Byte ruleType) { this.ruleType = ruleType; }
-
-    public String getAuditLogIds() { return auditLogIds; }
-    public void setAuditLogIds(String auditLogIds) { this.auditLogIds = auditLogIds; }
 
     public Integer getNormalRuleId() { return normalRuleId; }
     public void setNormalRuleId(Integer normalRuleId) { this.normalRuleId = normalRuleId; }
@@ -63,4 +63,7 @@ public class AlertResult {
 
     public Long getCreateTime() { return createTime; }
     public void setCreateTime(Long createTime) { this.createTime = createTime; }
+
+    public List<AlertResultAudit> getAuditDetails() { return auditDetails; }
+    public void setAuditDetails(List<AlertResultAudit> auditDetails) { this.auditDetails = auditDetails; }
 }

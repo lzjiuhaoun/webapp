@@ -1,5 +1,6 @@
 package com.ankki.webapp.service.impl;
 
+import com.ankki.webapp.dao.config.AlertResultAuditMapper;
 import com.ankki.webapp.dao.config.AlertResultMapper;
 import com.ankki.webapp.model.alert.AlertResult;
 import com.ankki.webapp.service.AlertResultService;
@@ -23,6 +24,9 @@ public class AlertResultServiceImpl implements AlertResultService {
     @Autowired
     private AlertResultMapper alertResultMapper;
 
+    @Autowired
+    private AlertResultAuditMapper alertResultAuditMapper;
+
     @Override
     public Map<String, Object> page(String keyword, Byte alertLevel, Byte ruleType,
                                     Integer pageNo, Integer pageSize) {
@@ -43,11 +47,16 @@ public class AlertResultServiceImpl implements AlertResultService {
 
     @Override
     public AlertResult detail(Integer id) {
-        return alertResultMapper.selectById(id);
+        AlertResult result = alertResultMapper.selectById(id);
+        if (result != null) {
+            result.setAuditDetails(alertResultAuditMapper.selectByAlertResultId(id));
+        }
+        return result;
     }
 
     @Override
     public Integer delete(Integer id) {
+        alertResultAuditMapper.deleteByAlertResultId(id);
         int count = alertResultMapper.deleteById(id);
         log.info("删除告警事件: id={}, result={}", id, count);
         return count;
@@ -57,6 +66,7 @@ public class AlertResultServiceImpl implements AlertResultService {
     public Integer batchDelete(List<Integer> ids) {
         int count = 0;
         for (Integer id : ids) {
+            alertResultAuditMapper.deleteByAlertResultId(id);
             count += alertResultMapper.deleteById(id);
         }
         log.info("批量删除告警事件: ids={}, count={}", ids, count);

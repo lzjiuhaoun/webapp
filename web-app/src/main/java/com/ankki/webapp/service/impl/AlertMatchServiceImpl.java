@@ -1,10 +1,12 @@
 package com.ankki.webapp.service.impl;
 
 import com.ankki.webapp.dao.config.AccessListMapper;
+import com.ankki.webapp.dao.config.AlertResultAuditMapper;
 import com.ankki.webapp.dao.config.AlertResultMapper;
 import com.ankki.webapp.dao.config.AlertRuleMapper;
 import com.ankki.webapp.model.alert.AlertRawLog;
 import com.ankki.webapp.model.alert.AlertResult;
+import com.ankki.webapp.model.alert.AlertResultAudit;
 import com.ankki.webapp.model.config.AccessListUser;
 import com.ankki.webapp.model.config.AlertRule;
 import com.ankki.webapp.service.AlertMatchService;
@@ -38,6 +40,9 @@ public class AlertMatchServiceImpl implements AlertMatchService {
 
     @Autowired
     private AlertResultMapper alertResultMapper;
+
+    @Autowired
+    private AlertResultAuditMapper alertResultAuditMapper;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -325,14 +330,20 @@ public class AlertMatchServiceImpl implements AlertMatchService {
         AlertResult result = new AlertResult();
         result.setAlertRuleId(rule.getId());
         result.setRuleType(AlertResult.RULE_TYPE_NORMAL);
-        result.setAuditLogIds(rawLog.getRecordId());
         result.setNormalRuleId(null);
         result.setAlertLevel(rule.getLevel());
         result.setTriggerCount(1);
         result.setCreateTime(System.currentTimeMillis());
-
         alertResultMapper.insert(result);
-        log.info("告警事件已写入: ruleId={}, ruleName={}, level={}, recordId={}, resultId={}",
-                rule.getId(), rule.getName(), rule.getLevel(), rawLog.getRecordId(), result.getId());
+
+        AlertResultAudit audit = new AlertResultAudit();
+        audit.setAlertResultId(result.getId());
+        audit.setAuditLogId(rawLog.getRecordId());
+        audit.setIpAddress(rawLog.getIpAddress());
+        alertResultAuditMapper.insert(audit);
+
+        log.info("告警事件已写入: ruleId={}, ruleName={}, level={}, recordId={}, ip={}, resultId={}",
+                rule.getId(), rule.getName(), rule.getLevel(), rawLog.getRecordId(),
+                rawLog.getIpAddress(), result.getId());
     }
 }

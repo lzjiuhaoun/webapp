@@ -6,7 +6,6 @@
         <id column="id" property="id"/>
         <result column="alert_rule_id" property="alertRuleId"/>
         <result column="rule_type" property="ruleType"/>
-        <result column="audit_log_ids" property="auditLogIds"/>
         <result column="normal_rule_id" property="normalRuleId"/>
         <result column="alert_level" property="alertLevel"/>
         <result column="trigger_count" property="triggerCount"/>
@@ -43,9 +42,9 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO alert_result (alert_rule_id, rule_type, audit_log_ids, normal_rule_id,
+        INSERT INTO alert_result (alert_rule_id, rule_type, normal_rule_id,
                                   alert_level, trigger_count, create_time)
-        VALUES (#{alertRuleId}, #{ruleType}, #{auditLogIds}, #{normalRuleId},
+        VALUES (#{alertRuleId}, #{ruleType}, #{normalRuleId},
                 #{alertLevel}, #{triggerCount}, #{createTime})
     </insert>
 

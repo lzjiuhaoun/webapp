@@ -422,11 +422,11 @@
       "id": 1,
       "alertRuleId": 1,
       "ruleType": 0,
-      "auditLogIds": "2077581105322381314",
       "normalRuleId": null,
       "alertLevel": 2,
       "triggerCount": 1,
-      "createTime": 1700000000000
+      "createTime": 1700000000000,
+      "auditDetails": null
     }
   ]
 }
