@@ -66,6 +66,7 @@ npm run build      # 输出到 dist/
 
 ### Git
 - 远程操作必须走本地代理：`git config http.proxy http://127.0.0.1:7897`
+- 提交说明必须使用中文
 
 ## 全局冲突优先级
 

@@ -197,16 +197,18 @@ export default {
       this.dialogVisible = true
       this.$nextTick(() => { if (this.$refs.formRef) this.$refs.formRef.clearValidate() })
     },
-    handleEdit(row) {
+    async handleEdit(row) {
       this.formMode = 'edit'
+      const res = await detail(row.id)
       this.form = {
-        id: row.id,
-        name: row.name,
-        type: row.type,
-        users: (row.users || []).length > 0
-          ? row.users.map(u => ({ userName: u.userName, userAccount: u.userAccount }))
+        id: res.id,
+        name: res.name,
+        type: res.type,
+        status: res.status,
+        users: (res.users || []).length > 0
+          ? res.users.map(u => ({ userName: u.userName, userAccount: u.userAccount }))
           : [{ userName: '', userAccount: '' }],
-        remark: row.remark || ''
+        remark: res.remark || ''
       }
       this.dialogVisible = true
       this.$nextTick(() => { if (this.$refs.formRef) this.$refs.formRef.clearValidate() })
